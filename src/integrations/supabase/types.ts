@@ -74,6 +74,7 @@ export type Database = {
           full_name: string
           id: string
           is_main_admin: boolean
+          matches_played: number
           nick: string
           phone: string
         }
@@ -82,6 +83,7 @@ export type Database = {
           full_name: string
           id: string
           is_main_admin?: boolean
+          matches_played?: number
           nick: string
           phone: string
         }
@@ -90,10 +92,43 @@ export type Database = {
           full_name?: string
           id?: string
           is_main_admin?: boolean
+          matches_played?: number
           nick?: string
           phone?: string
         }
         Relationships: []
+      }
+      room_links: {
+        Row: {
+          link: string | null
+          released: boolean
+          room_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          link?: string | null
+          released?: boolean
+          room_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          link?: string | null
+          released?: boolean
+          room_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_links_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: true
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       room_participants: {
         Row: {
@@ -127,6 +162,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           entry_fee: number
+          finished_at: string | null
           id: string
           max_participants: number
           name: string
@@ -137,6 +173,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           entry_fee: number
+          finished_at?: string | null
           id?: string
           max_participants: number
           name: string
@@ -147,6 +184,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           entry_fee?: number
+          finished_at?: string | null
           id?: string
           max_participants?: number
           name?: string
@@ -280,6 +318,36 @@ export type Database = {
       }
       approve_deposit: { Args: { p_id: string }; Returns: undefined }
       approve_withdrawal: { Args: { p_id: string }; Returns: undefined }
+      finalize_room: { Args: { p_room_id: string }; Returns: undefined }
+      get_ranking: {
+        Args: { p_limit?: number }
+        Returns: {
+          matches_played: number
+          nick: string
+        }[]
+      }
+      get_room_counts: {
+        Args: never
+        Returns: {
+          count: number
+          room_id: string
+        }[]
+      }
+      get_room_link_admin: {
+        Args: { p_room_id: string }
+        Returns: {
+          link: string
+          released: boolean
+        }[]
+      }
+      get_room_nicks: {
+        Args: { p_room_id: string }
+        Returns: {
+          is_me: boolean
+          nick: string
+          user_id: string
+        }[]
+      }
       grant_role: {
         Args: {
           p_role: Database["public"]["Enums"]["app_role"]
@@ -298,11 +366,19 @@ export type Database = {
       join_room: { Args: { p_room_id: string }; Returns: undefined }
       reject_deposit: { Args: { p_id: string }; Returns: undefined }
       reject_withdrawal: { Args: { p_id: string }; Returns: undefined }
+      release_room_link: {
+        Args: { p_released: boolean; p_room_id: string }
+        Returns: undefined
+      }
       revoke_role: {
         Args: {
           p_role: Database["public"]["Enums"]["app_role"]
           p_user_id: string
         }
+        Returns: undefined
+      }
+      set_room_link: {
+        Args: { p_link: string; p_room_id: string }
         Returns: undefined
       }
       update_app_settings: {
