@@ -134,7 +134,7 @@ function SignupForm({ onDone }: { onDone: () => void }) {
         password: parsed.password,
         options: {
           emailRedirectTo: typeof window !== "undefined" ? window.location.origin : undefined,
-          data: { full_name: parsed.full_name, phone: parsed.phone, nick: parsed.nick },
+          data: { full_name: parsed.full_name, phone: parsed.phone, nick: parsed.nick, nick2: parsed.nick2 || null },
         },
       });
       if (error) {
