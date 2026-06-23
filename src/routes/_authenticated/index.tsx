@@ -34,10 +34,10 @@ function HomePage() {
   const counts = useQuery({
     queryKey: ["room-counts"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("room_participants").select("room_id");
+      const { data, error } = await supabase.rpc("get_room_counts");
       if (error) throw error;
       const map: Record<string, number> = {};
-      for (const r of data) map[r.room_id] = (map[r.room_id] ?? 0) + 1;
+      for (const r of data ?? []) map[(r as any).room_id] = Number((r as any).count);
       return map;
     },
   });
