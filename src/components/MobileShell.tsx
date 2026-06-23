@@ -29,13 +29,18 @@ export function MobileShell({
   return (
     <div className="min-h-screen flex flex-col">
       <header className="sticky top-0 z-30 backdrop-blur-md bg-background/80 border-b border-border">
-        <div className="mx-auto max-w-xl px-4 py-3 flex items-center gap-3">
-          <Link to="/" className="font-bold tracking-tight text-neon text-lg">
+        <div className="mx-auto max-w-6xl px-4 md:px-8 py-3 flex items-center gap-3">
+          <Link to="/" className="font-bold tracking-tight text-neon text-lg md:text-xl">
             Diário Brawl Pro
           </Link>
+          <nav className="hidden md:flex items-center gap-1 ml-6">
+            <DesktopNavItem to="/" icon={<Home className="size-4" />} label="Salas" />
+            <DesktopNavItem to="/carteira" icon={<Wallet className="size-4" />} label="Carteira" />
+            <DesktopNavItem to="/perfil" icon={<User className="size-4" />} label="Perfil" />
+          </nav>
           <div className="ml-auto flex items-center gap-2">
             {typeof balance === "number" && (
-              <span className="text-xs px-2.5 py-1 rounded-full glow-border bg-surface text-neon font-semibold">
+              <span className="text-xs md:text-sm px-2.5 py-1 rounded-full glow-border bg-surface text-neon font-semibold">
                 R$ {balance.toFixed(2).replace(".", ",")}
               </span>
             )}
@@ -50,7 +55,7 @@ export function MobileShell({
         </div>
         {isAdmin && (
           <div className="bg-primary/15 border-t border-primary/30">
-            <div className="mx-auto max-w-xl px-4 py-2 flex items-center justify-between gap-3">
+            <div className="mx-auto max-w-6xl px-4 md:px-8 py-2 flex items-center justify-between gap-3">
               <span className="text-xs text-primary font-medium flex items-center gap-1.5">
                 <Shield className="size-3.5" /> Conta de administrador
               </span>
@@ -61,15 +66,15 @@ export function MobileShell({
           </div>
         )}
         {title && (
-          <div className="mx-auto max-w-xl px-4 pb-3">
-            <h1 className="text-xl font-bold tracking-tight">{title}</h1>
+          <div className="mx-auto max-w-6xl px-4 md:px-8 pb-3">
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight">{title}</h1>
           </div>
         )}
       </header>
 
-      <main className="flex-1 mx-auto max-w-xl w-full px-4 py-4 pb-24">{children}</main>
+      <main className="flex-1 mx-auto max-w-6xl w-full px-4 md:px-8 py-4 md:py-8 pb-24 md:pb-8">{children}</main>
 
-      <nav className="fixed bottom-0 inset-x-0 z-30 border-t border-border bg-background/95 backdrop-blur-md">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 border-t border-border bg-background/95 backdrop-blur-md">
         <div className="mx-auto max-w-xl grid grid-cols-3">
           <NavItem to="/" icon={<Home className="size-5" />} label="Salas" />
           <NavItem to="/carteira" icon={<Wallet className="size-5" />} label="Carteira" />
