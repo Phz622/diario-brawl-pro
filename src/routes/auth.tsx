@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Shield, Zap } from "lucide-react";
+import { ProTrophy } from "@/components/ProTrophy";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
