@@ -76,8 +76,9 @@ export function MobileShell({
       <main className="flex-1 mx-auto max-w-6xl w-full px-4 md:px-8 py-4 md:py-8 pb-24 md:pb-8">{children}</main>
 
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 border-t border-border bg-background/95 backdrop-blur-md">
-        <div className="mx-auto max-w-xl grid grid-cols-3">
+        <div className="mx-auto max-w-xl grid grid-cols-4">
           <NavItem to="/" icon={<Home className="size-5" />} label="Salas" />
+          <NavItem to="/ranking" icon={<Trophy className="size-5" />} label="Ranking" />
           <NavItem to="/carteira" icon={<Wallet className="size-5" />} label="Carteira" />
           <NavItem to="/perfil" icon={<User className="size-5" />} label="Perfil" />
         </div>
