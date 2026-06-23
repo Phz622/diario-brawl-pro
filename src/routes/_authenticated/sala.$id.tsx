@@ -79,6 +79,16 @@ function RoomPage() {
     qc.invalidateQueries({ queryKey: ["room-counts"] });
   }
 
+  useEffect(() => {
+    if (room.data?.finished_at) {
+      const t = setTimeout(() => {
+        toast.success("Partida finalizada!");
+        nav({ to: "/", replace: true });
+      }, 1500);
+      return () => clearTimeout(t);
+    }
+  }, [room.data?.finished_at, nav]);
+
   if (room.isLoading) {
     return <MobileShell isAdmin={isAdmin(roles.data)} balance={wallet.data ?? 0}><p className="text-sm text-muted-foreground">Carregando...</p></MobileShell>;
   }
