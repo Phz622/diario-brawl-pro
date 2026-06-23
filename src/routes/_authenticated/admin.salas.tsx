@@ -290,3 +290,61 @@ function RoomLinkPanel({ roomId }: { roomId: string }) {
     </div>
   );
 }
+
+function FinalizeDialog({ roomId, roomName, onDone }: { roomId: string; roomName: string; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [winner, setWinner] = useState<string>("");
+  const [busy, setBusy] = useState(false);
+  const parts = useQuery({
+    queryKey: ["finalize-parts", roomId],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_room_nicks", { p_room_id: roomId });
+      if (error) throw error;
+      return (data ?? []) as { user_id: string; nick: string }[];
+    },
+  });
+
+  async function submit() {
+    if (!winner) { toast.error("Selecione o vencedor"); return; }
+    setBusy(true);
+    const { error } = await supabase.rpc("finalize_room_with_winner", { p_room_id: roomId, p_winner_id: winner });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Partida finalizada! Prêmio de R$ 10,00 enviado ao vencedor.");
+    setOpen(false); setWinner(""); onDone();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="icon" variant="outline" className="size-7" title="Finalizar partida">
+          <Flag className="size-3.5 text-neon" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Finalizar — {roomName}</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground">Selecione o vencedor. Ele receberá +R$ 10,00 automaticamente e a partida será computada para todos os inscritos.</p>
+          {parts.isLoading && <p className="text-xs">Carregando inscritos...</p>}
+          {parts.data?.length === 0 && <p className="text-xs text-muted-foreground">Nenhum inscrito.</p>}
+          <div className="grid gap-1 max-h-72 overflow-y-auto">
+            {parts.data?.map((p) => (
+              <button
+                key={p.user_id}
+                type="button"
+                onClick={() => setWinner(p.user_id)}
+                className={`text-left text-sm px-3 py-2 rounded-md border ${winner === p.user_id ? "border-primary bg-primary/15 text-primary font-semibold" : "border-border bg-surface"}`}
+              >
+                @{p.nick}
+              </button>
+            ))}
+          </div>
+          <Button onClick={submit} disabled={busy || !winner} className="w-full glow-strong">
+            {busy ? "Finalizando..." : "Confirmar vencedor e finalizar"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
