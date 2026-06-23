@@ -136,7 +136,17 @@ function SignupForm({ onDone }: { onDone: () => void }) {
         },
       });
       if (error) {
-        if (error.message?.toLowerCase().includes("duplicate") || error.message?.toLowerCase().includes("unique")) {
+        const msg = (error.message || "").toLowerCase();
+        if (msg.includes("password") && (msg.includes("short") || msg.includes("at least") || msg.includes("characters"))) {
+          throw new Error("A senha está muito curta. Use pelo menos 8 caracteres (de preferência letras, números e símbolos).");
+        }
+        if (msg.includes("weak")) {
+          throw new Error("Senha muito fraca. Misture letras maiúsculas, minúsculas, números e símbolos.");
+        }
+        if (msg.includes("already registered") || msg.includes("already exists") || msg.includes("user already")) {
+          throw new Error("Já existe uma conta com este email.");
+        }
+        if (msg.includes("duplicate") || msg.includes("unique")) {
           throw new Error("Já existe uma conta com este nome, telefone ou nick.");
         }
         throw error;
