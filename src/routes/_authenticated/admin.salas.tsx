@@ -241,7 +241,7 @@ function InlineParticipants({ roomId }: { roomId: string }) {
   );
 }
 
-
+function RoomLinkPanel({ roomId }: { roomId: string }) {
   const qc = useQueryClient();
   const q = useQuery({
     queryKey: ["admin-room-link", roomId],
