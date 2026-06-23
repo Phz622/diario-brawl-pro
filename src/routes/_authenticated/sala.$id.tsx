@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { brl } from "@/lib/format";
 import { toast } from "sonner";
-import { Users, Trophy, Lock } from "lucide-react";
+import { Users, Trophy, Lock, Link as LinkIcon, Copy } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/sala/$id")({
   component: RoomPage,
@@ -32,16 +32,25 @@ function RoomPage() {
     },
   });
 
-  const parts = useQuery({
-    queryKey: ["room-parts", id],
+  const nicks = useQuery({
+    queryKey: ["room-nicks", id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("room_participants").select("user_id, joined_at").eq("room_id", id);
+      const { data, error } = await supabase.rpc("get_room_nicks", { p_room_id: id });
+      if (error) throw error;
+      return (data ?? []) as { user_id: string; nick: string; is_me: boolean }[];
+    },
+  });
+
+  const linkQ = useQuery({
+    queryKey: ["room-link", id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("room_links").select("link, released").eq("room_id", id).maybeSingle();
       if (error) throw error;
       return data;
     },
   });
 
-  const myJoin = parts.data?.some((p) => p.user_id === user?.id);
+  const myJoin = nicks.data?.some((p) => p.is_me) ?? false;
 
   useEffect(() => {
     const ch = supabase
@@ -50,7 +59,10 @@ function RoomPage() {
         qc.invalidateQueries({ queryKey: ["room", id] });
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "room_participants", filter: `room_id=eq.${id}` }, () => {
-        qc.invalidateQueries({ queryKey: ["room-parts", id] });
+        qc.invalidateQueries({ queryKey: ["room-nicks", id] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "room_links", filter: `room_id=eq.${id}` }, () => {
+        qc.invalidateQueries({ queryKey: ["room-link", id] });
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
@@ -61,8 +73,9 @@ function RoomPage() {
     if (error) { toast.error(error.message); return; }
     toast.success("Inscrição confirmada!");
     qc.invalidateQueries({ queryKey: ["wallet"] });
-    qc.invalidateQueries({ queryKey: ["room-parts", id] });
+    qc.invalidateQueries({ queryKey: ["room-nicks", id] });
     qc.invalidateQueries({ queryKey: ["room", id] });
+    qc.invalidateQueries({ queryKey: ["room-counts"] });
   }
 
   if (room.isLoading) {
@@ -73,8 +86,9 @@ function RoomPage() {
   }
 
   const r = room.data;
-  const count = parts.data?.length ?? 0;
-  const canJoin = r.status === "aberta" && !myJoin && count < r.max_participants;
+  const count = nicks.data?.length ?? 0;
+  const canJoin = r.status === "aberta" && !myJoin && count < r.max_participants && !r.finished_at;
+  const linkVisible = linkQ.data?.released && linkQ.data?.link;
 
   return (
     <MobileShell isAdmin={isAdmin(roles.data)} balance={wallet.data ?? 0}>
@@ -86,9 +100,11 @@ function RoomPage() {
               <h1 className="text-xl font-bold">{r.name}</h1>
               {r.description && <p className="text-sm text-muted-foreground mt-1">{r.description}</p>}
             </div>
-            {r.status === "fechada"
-              ? <Badge variant="secondary"><Lock className="size-3 mr-1" />Fechada</Badge>
-              : <Badge className="bg-primary text-primary-foreground">Aberta</Badge>}
+            {r.finished_at
+              ? <Badge variant="secondary"><Trophy className="size-3 mr-1" />Finalizada</Badge>
+              : r.status === "fechada"
+                ? <Badge variant="secondary"><Lock className="size-3 mr-1" />Fechada</Badge>
+                : <Badge className="bg-primary text-primary-foreground">Aberta</Badge>}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Stat icon={<Trophy className="size-4" />} label="Inscrição" value={brl(r.entry_fee)} />
@@ -100,9 +116,46 @@ function RoomPage() {
             </div>
           ) : (
             <Button onClick={join} disabled={!canJoin} className="w-full glow-strong">
-              {canJoin ? `Entrar — ${brl(r.entry_fee)}` : r.status === "fechada" ? "Inscrições fechadas" : "Sala lotada"}
+              {canJoin ? `Entrar — ${brl(r.entry_fee)}` : r.finished_at ? "Partida finalizada" : r.status === "fechada" ? "Inscrições fechadas" : "Sala lotada"}
             </Button>
           )}
+        </CardContent>
+      </Card>
+
+      {myJoin && (
+        <Card className="bg-card mt-3">
+          <CardContent className="p-4 space-y-2">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <LinkIcon className="size-4 text-neon" /> Link da sala do Brawl Stars
+            </div>
+            {linkVisible ? (
+              <div className="flex items-center justify-between gap-2 bg-surface rounded-md px-3 py-2">
+                <div className="text-sm font-mono break-all min-w-0">{linkQ.data!.link}</div>
+                <Button size="icon" variant="ghost" onClick={() => { navigator.clipboard.writeText(linkQ.data!.link!); toast.success("Link copiado"); }}>
+                  <Copy className="size-4" />
+                </Button>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">Aguardando o admin liberar o link da sala...</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      <Card className="bg-card mt-3">
+        <CardContent className="p-4 space-y-2">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <Users className="size-4 text-neon" /> Inscritos ({count})
+          </div>
+          {nicks.isLoading && <p className="text-xs text-muted-foreground">Carregando...</p>}
+          {!nicks.isLoading && count === 0 && <p className="text-xs text-muted-foreground">Ninguém inscrito ainda.</p>}
+          <ul className="grid grid-cols-2 gap-2">
+            {nicks.data?.map((p) => (
+              <li key={p.user_id} className={`text-xs px-2 py-1.5 rounded-md border ${p.is_me ? "border-primary/40 bg-primary/10 text-primary font-semibold" : "border-border bg-surface"}`}>
+                @{p.nick}{p.is_me ? " (você)" : ""}
+              </li>
+            ))}
+          </ul>
         </CardContent>
       </Card>
     </MobileShell>
