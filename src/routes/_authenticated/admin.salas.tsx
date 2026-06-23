@@ -164,9 +164,17 @@ function ParticipantsDialog({ roomId, roomName, canRemove }: { roomId: string; r
     queryKey: ["room-parts-admin", roomId],
     enabled: open,
     queryFn: async () => {
-      const { data, error } = await supabase.from("room_participants").select("user_id, joined_at, profiles:user_id(full_name, nick, phone)").eq("room_id", roomId);
+      const { data, error } = await supabase.from("room_participants").select("user_id, joined_at").eq("room_id", roomId);
       if (error) throw error;
-      return data as any[];
+      const ids = (data ?? []).map((d) => d.user_id);
+      let profiles: Record<string, any> = {};
+      if (ids.length) {
+        const { data: ps, error: pe } = await supabase
+          .from("profiles").select("id, full_name, nick, phone").in("id", ids);
+        if (pe) throw pe;
+        for (const p of ps ?? []) profiles[p.id] = p;
+      }
+      return (data ?? []).map((d) => ({ ...d, profiles: profiles[d.user_id] })) as any[];
     },
   });
 
