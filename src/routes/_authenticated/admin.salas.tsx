@@ -37,12 +37,13 @@ function RoomsAdmin() {
   const counts = useQuery({
     queryKey: ["admin-room-counts"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("room_participants").select("room_id");
+      const { data, error } = await supabase.rpc("get_room_counts");
       if (error) throw error;
       const map: Record<string, number> = {};
-      for (const r of data) map[r.room_id] = (map[r.room_id] ?? 0) + 1;
+      for (const r of data ?? []) map[(r as any).room_id] = Number((r as any).count);
       return map;
     },
+    refetchInterval: 10000,
   });
 
   async function toggleStatus(id: string, status: "aberta" | "fechada") {
@@ -58,13 +59,6 @@ function RoomsAdmin() {
     const { error } = await supabase.from("rooms").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
     toast.success("Sala excluída"); qc.invalidateQueries({ queryKey: ["admin-rooms"] });
-  }
-
-  async function finalize(id: string) {
-    if (!confirm("Finalizar partida? Isso fecha a sala e adiciona +1 partida para cada inscrito.")) return;
-    const { error } = await supabase.rpc("finalize_room", { p_room_id: id });
-    if (error) { toast.error(error.message); return; }
-    toast.success("Partida finalizada"); qc.invalidateQueries({ queryKey: ["admin-rooms"] });
   }
 
   return (
@@ -102,9 +96,7 @@ function RoomsAdmin() {
                   trigger={<Button size="icon" variant="outline" className="size-7" title="Editar"><Pencil className="size-3.5" /></Button>} />
                 <ParticipantsDialog roomId={r.id} roomName={r.name} canRemove={main} />
                 {!r.finished_at && (
-                  <Button size="icon" variant="outline" className="size-7" title="Finalizar partida" onClick={() => finalize(r.id)}>
-                    <Flag className="size-3.5 text-neon" />
-                  </Button>
+                  <FinalizeDialog roomId={r.id} roomName={r.name} onDone={() => qc.invalidateQueries({ queryKey: ["admin-rooms"] })} />
                 )}
                 {main && <Button size="icon" variant="outline" className="size-7" title="Excluir" onClick={() => remove(r.id)}><Trash2 className="size-3.5" /></Button>}
               </div>
@@ -296,5 +288,63 @@ function RoomLinkPanel({ roomId }: { roomId: string }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function FinalizeDialog({ roomId, roomName, onDone }: { roomId: string; roomName: string; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [winner, setWinner] = useState<string>("");
+  const [busy, setBusy] = useState(false);
+  const parts = useQuery({
+    queryKey: ["finalize-parts", roomId],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_room_nicks", { p_room_id: roomId });
+      if (error) throw error;
+      return (data ?? []) as { user_id: string; nick: string }[];
+    },
+  });
+
+  async function submit() {
+    if (!winner) { toast.error("Selecione o vencedor"); return; }
+    setBusy(true);
+    const { error } = await supabase.rpc("finalize_room_with_winner", { p_room_id: roomId, p_winner_id: winner });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Partida finalizada! Prêmio de R$ 10,00 enviado ao vencedor.");
+    setOpen(false); setWinner(""); onDone();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="icon" variant="outline" className="size-7" title="Finalizar partida">
+          <Flag className="size-3.5 text-neon" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Finalizar — {roomName}</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground">Selecione o vencedor. Ele receberá +R$ 10,00 automaticamente e a partida será computada para todos os inscritos.</p>
+          {parts.isLoading && <p className="text-xs">Carregando inscritos...</p>}
+          {parts.data?.length === 0 && <p className="text-xs text-muted-foreground">Nenhum inscrito.</p>}
+          <div className="grid gap-1 max-h-72 overflow-y-auto">
+            {parts.data?.map((p) => (
+              <button
+                key={p.user_id}
+                type="button"
+                onClick={() => setWinner(p.user_id)}
+                className={`text-left text-sm px-3 py-2 rounded-md border ${winner === p.user_id ? "border-primary bg-primary/15 text-primary font-semibold" : "border-border bg-surface"}`}
+              >
+                @{p.nick}
+              </button>
+            ))}
+          </div>
+          <Button onClick={submit} disabled={busy || !winner} className="w-full glow-strong">
+            {busy ? "Finalizando..." : "Confirmar vencedor e finalizar"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

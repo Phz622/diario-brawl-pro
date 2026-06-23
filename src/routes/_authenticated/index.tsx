@@ -24,7 +24,8 @@ function HomePage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("rooms")
-        .select("id, name, entry_fee, max_participants, status, description, created_at")
+        .select("id, name, entry_fee, max_participants, status, description, created_at, finished_at")
+        .is("finished_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;

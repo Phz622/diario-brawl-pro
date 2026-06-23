@@ -76,6 +76,7 @@ export type Database = {
           is_main_admin: boolean
           matches_played: number
           nick: string
+          nick2: string | null
           phone: string
         }
         Insert: {
@@ -85,6 +86,7 @@ export type Database = {
           is_main_admin?: boolean
           matches_played?: number
           nick: string
+          nick2?: string | null
           phone: string
         }
         Update: {
@@ -94,6 +96,7 @@ export type Database = {
           is_main_admin?: boolean
           matches_played?: number
           nick?: string
+          nick2?: string | null
           phone?: string
         }
         Relationships: []
@@ -167,6 +170,7 @@ export type Database = {
           max_participants: number
           name: string
           status: Database["public"]["Enums"]["room_status"]
+          winner_id: string | null
         }
         Insert: {
           created_at?: string
@@ -178,6 +182,7 @@ export type Database = {
           max_participants: number
           name: string
           status?: Database["public"]["Enums"]["room_status"]
+          winner_id?: string | null
         }
         Update: {
           created_at?: string
@@ -189,6 +194,7 @@ export type Database = {
           max_participants?: number
           name?: string
           status?: Database["public"]["Enums"]["room_status"]
+          winner_id?: string | null
         }
         Relationships: []
       }
@@ -303,6 +309,7 @@ export type Database = {
         Args: { p_delta: number; p_reason: string; p_user_id: string }
         Returns: undefined
       }
+      admin_delete_user: { Args: { p_user_id: string }; Returns: undefined }
       admin_remove_participant: {
         Args: { p_refund: boolean; p_room_id: string; p_user_id: string }
         Returns: undefined
@@ -319,6 +326,10 @@ export type Database = {
       approve_deposit: { Args: { p_id: string }; Returns: undefined }
       approve_withdrawal: { Args: { p_id: string }; Returns: undefined }
       finalize_room: { Args: { p_room_id: string }; Returns: undefined }
+      finalize_room_with_winner: {
+        Args: { p_room_id: string; p_winner_id: string }
+        Returns: undefined
+      }
       get_ranking: {
         Args: { p_limit?: number }
         Returns: {
