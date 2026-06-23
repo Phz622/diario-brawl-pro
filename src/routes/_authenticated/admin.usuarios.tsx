@@ -89,7 +89,7 @@ function AdjustBalanceDialog({ userId, onDone }: { userId: string; onDone: () =>
   async function submit() {
     const d = parseFloat(delta.replace(",", "."));
     if (!isFinite(d) || d === 0) { toast.error("Valor inválido"); return; }
-    const { error } = await supabase.rpc("admin_adjust_balance", { p_user_id: userId, p_delta: d, p_reason: reason || null });
+    const { error } = await supabase.rpc("admin_adjust_balance", { p_user_id: userId, p_delta: d, p_reason: reason || "Ajuste manual" });
     if (error) { toast.error(error.message); return; }
     toast.success("Saldo ajustado");
     setOpen(false); setDelta(""); setReason("");
