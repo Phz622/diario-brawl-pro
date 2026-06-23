@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Shield, Zap } from "lucide-react";
-import { ProTrophy } from "@/components/ProTrophy";
+
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -40,9 +40,6 @@ function AuthPage() {
     <div className="min-h-screen neon-grid-bg flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
-          <div className="flex justify-center mb-3">
-            <ProTrophy size={96} className="drop-shadow-[0_0_18px_rgba(57,255,20,0.55)]" />
-          </div>
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface glow-border text-xs text-neon font-semibold mb-3">
             <Zap className="size-3.5" /> Plataforma de Diarios e Camp
           </div>
