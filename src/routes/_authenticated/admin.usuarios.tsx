@@ -74,10 +74,17 @@ function UsersAdmin() {
 }
 
 function UserActions({ userId, roles, onChanged }: { userId: string; roles: AppRole[]; onChanged: () => void }) {
+  async function removeUser() {
+    if (!confirm("Excluir esta conta? Todos os dados do usuário serão removidos.")) return;
+    const { error } = await supabase.rpc("admin_delete_user", { p_user_id: userId });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Conta excluída"); onChanged();
+  }
   return (
-    <div className="mt-1 flex gap-1 justify-end">
+    <div className="mt-1 flex gap-1 justify-end flex-wrap">
       <AdjustBalanceDialog userId={userId} onDone={onChanged} />
       <ManageRolesDialog userId={userId} roles={roles} onDone={onChanged} />
+      <Button size="sm" variant="destructive" className="h-7 text-[10px]" onClick={removeUser}>Excluir</Button>
     </div>
   );
 }
