@@ -109,6 +109,7 @@ function RoomsAdmin() {
                 {main && <Button size="icon" variant="outline" className="size-7" title="Excluir" onClick={() => remove(r.id)}><Trash2 className="size-3.5" /></Button>}
               </div>
             </div>
+            <InlineParticipants roomId={r.id} />
             <RoomLinkPanel roomId={r.id} />
           </div>
         ))}
