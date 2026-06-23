@@ -112,7 +112,7 @@ const signupSchema = z.object({
   phone: z.string().trim().min(8, "Telefone inválido").max(20),
   nick: z.string().trim().min(2, "Nick obrigatório").max(40),
   email: z.string().trim().email("Email inválido").max(160),
-  password: z.string().min(6, "Senha precisa de 6+ caracteres").max(100),
+  password: z.string().min(8, "A senha precisa ter pelo menos 8 caracteres. Tente uma senha maior.").max(100),
 });
 
 function SignupForm({ onDone }: { onDone: () => void }) {
