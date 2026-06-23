@@ -35,6 +35,7 @@ export function MobileShell({
           </Link>
           <nav className="hidden md:flex items-center gap-1 ml-6">
             <DesktopNavItem to="/" icon={<Home className="size-4" />} label="Salas" />
+            <DesktopNavItem to="/ranking" icon={<Trophy className="size-4" />} label="Ranking" />
             <DesktopNavItem to="/carteira" icon={<Wallet className="size-4" />} label="Carteira" />
             <DesktopNavItem to="/perfil" icon={<User className="size-4" />} label="Perfil" />
           </nav>
