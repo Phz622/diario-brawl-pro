@@ -37,12 +37,13 @@ function RoomsAdmin() {
   const counts = useQuery({
     queryKey: ["admin-room-counts"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("room_participants").select("room_id");
+      const { data, error } = await supabase.rpc("get_room_counts");
       if (error) throw error;
       const map: Record<string, number> = {};
-      for (const r of data) map[r.room_id] = (map[r.room_id] ?? 0) + 1;
+      for (const r of data ?? []) map[(r as any).room_id] = Number((r as any).count);
       return map;
     },
+    refetchInterval: 10000,
   });
 
   async function toggleStatus(id: string, status: "aberta" | "fechada") {
@@ -58,13 +59,6 @@ function RoomsAdmin() {
     const { error } = await supabase.from("rooms").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
     toast.success("Sala excluída"); qc.invalidateQueries({ queryKey: ["admin-rooms"] });
-  }
-
-  async function finalize(id: string) {
-    if (!confirm("Finalizar partida? Isso fecha a sala e adiciona +1 partida para cada inscrito.")) return;
-    const { error } = await supabase.rpc("finalize_room", { p_room_id: id });
-    if (error) { toast.error(error.message); return; }
-    toast.success("Partida finalizada"); qc.invalidateQueries({ queryKey: ["admin-rooms"] });
   }
 
   return (
