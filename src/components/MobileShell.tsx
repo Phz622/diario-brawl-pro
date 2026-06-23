@@ -98,3 +98,17 @@ function NavItem({ to, icon, label }: { to: string; icon: ReactNode; label: stri
     </Link>
   );
 }
+
+function DesktopNavItem({ to, icon, label }: { to: string; icon: ReactNode; label: string }) {
+  return (
+    <Link
+      to={to}
+      className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-surface transition-colors"
+      activeProps={{ className: "text-neon bg-surface" }}
+      activeOptions={{ exact: to === "/" }}
+    >
+      {icon}
+      <span className="font-medium">{label}</span>
+    </Link>
+  );
+}
