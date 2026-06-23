@@ -112,7 +112,7 @@ const signupSchema = z.object({
   phone: z.string().trim().min(8, "Telefone inválido").max(20),
   nick: z.string().trim().min(2, "Nick obrigatório").max(40),
   email: z.string().trim().email("Email inválido").max(160),
-  password: z.string().min(6, "Senha precisa de 6+ caracteres").max(100),
+  password: z.string().min(8, "A senha precisa ter pelo menos 8 caracteres. Tente uma senha maior.").max(100),
 });
 
 function SignupForm({ onDone }: { onDone: () => void }) {
@@ -136,7 +136,17 @@ function SignupForm({ onDone }: { onDone: () => void }) {
         },
       });
       if (error) {
-        if (error.message?.toLowerCase().includes("duplicate") || error.message?.toLowerCase().includes("unique")) {
+        const msg = (error.message || "").toLowerCase();
+        if (msg.includes("password") && (msg.includes("short") || msg.includes("at least") || msg.includes("characters"))) {
+          throw new Error("A senha está muito curta. Use pelo menos 8 caracteres (de preferência letras, números e símbolos).");
+        }
+        if (msg.includes("weak")) {
+          throw new Error("Senha muito fraca. Misture letras maiúsculas, minúsculas, números e símbolos.");
+        }
+        if (msg.includes("already registered") || msg.includes("already exists") || msg.includes("user already")) {
+          throw new Error("Já existe uma conta com este email.");
+        }
+        if (msg.includes("duplicate") || msg.includes("unique")) {
           throw new Error("Já existe uma conta com este nome, telefone ou nick.");
         }
         throw error;

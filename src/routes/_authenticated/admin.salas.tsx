@@ -12,7 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { useSession, useRoles, isMainAdmin } from "@/hooks/use-auth";
 import { brl } from "@/lib/format";
 import { toast } from "sonner";
-import { Plus, Lock, Unlock, Pencil, Trash2, Users } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Plus, Lock, Unlock, Pencil, Trash2, Users, Link as LinkIcon, Flag } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/salas")({
   component: RoomsAdmin,
@@ -59,6 +60,13 @@ function RoomsAdmin() {
     toast.success("Sala excluída"); qc.invalidateQueries({ queryKey: ["admin-rooms"] });
   }
 
+  async function finalize(id: string) {
+    if (!confirm("Finalizar partida? Isso fecha a sala e adiciona +1 partida para cada inscrito.")) return;
+    const { error } = await supabase.rpc("finalize_room", { p_room_id: id });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Partida finalizada"); qc.invalidateQueries({ queryKey: ["admin-rooms"] });
+  }
+
   return (
     <Card className="bg-card">
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -68,30 +76,40 @@ function RoomsAdmin() {
       <CardContent className="space-y-2">
         {rooms.data?.length === 0 && <p className="text-xs text-muted-foreground py-4">Nenhuma sala.</p>}
         {rooms.data?.map((r) => (
-          <div key={r.id} className="rounded-md border border-border bg-surface p-3">
+          <div key={r.id} className="rounded-md border border-border bg-surface p-3 space-y-3">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-semibold">{r.name}</span>
-                  {r.status === "fechada"
-                    ? <Badge variant="secondary"><Lock className="size-3 mr-1" />Fechada</Badge>
-                    : <Badge className="bg-primary text-primary-foreground"><Unlock className="size-3 mr-1" />Aberta</Badge>}
+                  {r.finished_at
+                    ? <Badge variant="secondary"><Flag className="size-3 mr-1" />Finalizada</Badge>
+                    : r.status === "fechada"
+                      ? <Badge variant="secondary"><Lock className="size-3 mr-1" />Fechada</Badge>
+                      : <Badge className="bg-primary text-primary-foreground"><Unlock className="size-3 mr-1" />Aberta</Badge>}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
                   <span className="text-neon font-semibold">{brl(r.entry_fee)}</span>
                   <span className="flex items-center gap-1"><Users className="size-3" />{counts.data?.[r.id] ?? 0}/{r.max_participants}</span>
                 </div>
               </div>
-              <div className="flex gap-1">
-                <Button size="icon" variant="outline" className="size-7" onClick={() => toggleStatus(r.id, r.status as any)}>
-                  {r.status === "aberta" ? <Lock className="size-3.5" /> : <Unlock className="size-3.5" />}
-                </Button>
+              <div className="flex gap-1 flex-wrap justify-end">
+                {!r.finished_at && (
+                  <Button size="icon" variant="outline" className="size-7" title={r.status === "aberta" ? "Fechar inscrições" : "Abrir inscrições"} onClick={() => toggleStatus(r.id, r.status as any)}>
+                    {r.status === "aberta" ? <Lock className="size-3.5" /> : <Unlock className="size-3.5" />}
+                  </Button>
+                )}
                 <RoomFormDialog room={r} onSaved={() => qc.invalidateQueries({ queryKey: ["admin-rooms"] })}
-                  trigger={<Button size="icon" variant="outline" className="size-7"><Pencil className="size-3.5" /></Button>} />
+                  trigger={<Button size="icon" variant="outline" className="size-7" title="Editar"><Pencil className="size-3.5" /></Button>} />
                 <ParticipantsDialog roomId={r.id} roomName={r.name} canRemove={main} />
-                {main && <Button size="icon" variant="outline" className="size-7" onClick={() => remove(r.id)}><Trash2 className="size-3.5" /></Button>}
+                {!r.finished_at && (
+                  <Button size="icon" variant="outline" className="size-7" title="Finalizar partida" onClick={() => finalize(r.id)}>
+                    <Flag className="size-3.5 text-neon" />
+                  </Button>
+                )}
+                {main && <Button size="icon" variant="outline" className="size-7" title="Excluir" onClick={() => remove(r.id)}><Trash2 className="size-3.5" /></Button>}
               </div>
             </div>
+            <RoomLinkPanel roomId={r.id} />
           </div>
         ))}
       </CardContent>
@@ -182,5 +200,63 @@ function ParticipantsDialog({ roomId, roomName, canRemove }: { roomId: string; r
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function RoomLinkPanel({ roomId }: { roomId: string }) {
+  const qc = useQueryClient();
+  const q = useQuery({
+    queryKey: ["admin-room-link", roomId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_room_link_admin", { p_room_id: roomId });
+      if (error) throw error;
+      const row = (data ?? [])[0] as { link: string | null; released: boolean } | undefined;
+      return row ?? { link: "", released: false };
+    },
+  });
+  const [link, setLink] = useState<string>("");
+  const [edited, setEdited] = useState(false);
+
+  const current = q.data?.link ?? "";
+  const released = q.data?.released ?? false;
+  const value = edited ? link : current;
+
+  async function save() {
+    const { error } = await supabase.rpc("set_room_link", { p_room_id: roomId, p_link: value });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Link salvo"); setEdited(false);
+    qc.invalidateQueries({ queryKey: ["admin-room-link", roomId] });
+  }
+  async function toggle(v: boolean) {
+    const { error } = await supabase.rpc("release_room_link", { p_room_id: roomId, p_released: v });
+    if (error) { toast.error(error.message); return; }
+    toast.success(v ? "Link liberado para participantes" : "Link ocultado");
+    qc.invalidateQueries({ queryKey: ["admin-room-link", roomId] });
+  }
+
+  return (
+    <div className="rounded-md bg-card/60 border border-border/60 p-2 space-y-2">
+      <div className="flex items-center gap-2 text-xs font-semibold text-neon">
+        <LinkIcon className="size-3.5" /> Link da sala (Brawl Stars)
+      </div>
+      <div className="flex gap-1">
+        <Input
+          value={value}
+          onChange={(e) => { setLink(e.target.value); setEdited(true); }}
+          placeholder="Cole aqui o link da sala"
+          className="h-8 text-xs"
+        />
+        <Button size="sm" className="h-8" onClick={save} disabled={!edited}>Salvar</Button>
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] text-muted-foreground">
+          {released ? "Liberado para participantes" : "Oculto (apenas admins)"}
+        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px]">Liberar</span>
+          <Switch checked={released} onCheckedChange={toggle} disabled={!current && !edited} />
+        </div>
+      </div>
+    </div>
   );
 }

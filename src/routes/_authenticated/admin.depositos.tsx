@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,8 @@ function DepositsAdmin() {
 
   const list = useQuery({
     queryKey: ["admin-deposits", tab],
+    refetchOnWindowFocus: true,
+    refetchInterval: 15000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("deposit_requests")
@@ -29,6 +31,16 @@ function DepositsAdmin() {
       return data;
     },
   });
+
+  useEffect(() => {
+    const ch = supabase
+      .channel("admin-deposits-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "deposit_requests" }, () => {
+        qc.invalidateQueries({ queryKey: ["admin-deposits"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [qc]);
 
   async function approve(id: string) {
     const { error } = await supabase.rpc("approve_deposit", { p_id: id });
