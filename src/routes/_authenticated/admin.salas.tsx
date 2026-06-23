@@ -109,6 +109,7 @@ function RoomsAdmin() {
                 {main && <Button size="icon" variant="outline" className="size-7" title="Excluir" onClick={() => remove(r.id)}><Trash2 className="size-3.5" /></Button>}
               </div>
             </div>
+            <InlineParticipants roomId={r.id} />
             <RoomLinkPanel roomId={r.id} />
           </div>
         ))}
@@ -208,6 +209,35 @@ function ParticipantsDialog({ roomId, roomName, canRemove }: { roomId: string; r
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function InlineParticipants({ roomId }: { roomId: string }) {
+  const list = useQuery({
+    queryKey: ["admin-room-nicks", roomId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_room_nicks", { p_room_id: roomId });
+      if (error) throw error;
+      return (data ?? []) as { user_id: string; nick: string; is_me: boolean }[];
+    },
+    refetchInterval: 15000,
+  });
+  const items = list.data ?? [];
+  return (
+    <div className="rounded-md bg-card/60 border border-border/60 p-2">
+      <div className="flex items-center gap-2 text-xs font-semibold text-neon mb-1">
+        <Users className="size-3.5" /> Inscritos ({items.length})
+      </div>
+      {items.length === 0 ? (
+        <p className="text-[11px] text-muted-foreground">Nenhum inscrito ainda.</p>
+      ) : (
+        <div className="flex flex-wrap gap-1">
+          {items.map((p) => (
+            <Badge key={p.user_id} variant="outline" className="text-[10px] font-mono">@{p.nick}</Badge>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
