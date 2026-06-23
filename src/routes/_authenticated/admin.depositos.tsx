@@ -24,11 +24,19 @@ function DepositsAdmin() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("deposit_requests")
-        .select("*, profiles:user_id (full_name, phone, nick)")
+        .select("*")
         .eq("status", tab as any)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      const ids = Array.from(new Set((data ?? []).map((d) => d.user_id)));
+      let profiles: Record<string, any> = {};
+      if (ids.length) {
+        const { data: ps, error: pe } = await supabase
+          .from("profiles").select("id, full_name, phone, nick").in("id", ids);
+        if (pe) throw pe;
+        for (const p of ps ?? []) profiles[p.id] = p;
+      }
+      return (data ?? []).map((d) => ({ ...d, profiles: profiles[d.user_id] }));
     },
   });
 
