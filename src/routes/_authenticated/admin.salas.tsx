@@ -202,3 +202,61 @@ function ParticipantsDialog({ roomId, roomName, canRemove }: { roomId: string; r
     </Dialog>
   );
 }
+
+function RoomLinkPanel({ roomId }: { roomId: string }) {
+  const qc = useQueryClient();
+  const q = useQuery({
+    queryKey: ["admin-room-link", roomId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_room_link_admin", { p_room_id: roomId });
+      if (error) throw error;
+      const row = (data ?? [])[0] as { link: string | null; released: boolean } | undefined;
+      return row ?? { link: "", released: false };
+    },
+  });
+  const [link, setLink] = useState<string>("");
+  const [edited, setEdited] = useState(false);
+
+  const current = q.data?.link ?? "";
+  const released = q.data?.released ?? false;
+  const value = edited ? link : current;
+
+  async function save() {
+    const { error } = await supabase.rpc("set_room_link", { p_room_id: roomId, p_link: value });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Link salvo"); setEdited(false);
+    qc.invalidateQueries({ queryKey: ["admin-room-link", roomId] });
+  }
+  async function toggle(v: boolean) {
+    const { error } = await supabase.rpc("release_room_link", { p_room_id: roomId, p_released: v });
+    if (error) { toast.error(error.message); return; }
+    toast.success(v ? "Link liberado para participantes" : "Link ocultado");
+    qc.invalidateQueries({ queryKey: ["admin-room-link", roomId] });
+  }
+
+  return (
+    <div className="rounded-md bg-card/60 border border-border/60 p-2 space-y-2">
+      <div className="flex items-center gap-2 text-xs font-semibold text-neon">
+        <LinkIcon className="size-3.5" /> Link da sala (Brawl Stars)
+      </div>
+      <div className="flex gap-1">
+        <Input
+          value={value}
+          onChange={(e) => { setLink(e.target.value); setEdited(true); }}
+          placeholder="Cole aqui o link da sala"
+          className="h-8 text-xs"
+        />
+        <Button size="sm" className="h-8" onClick={save} disabled={!edited}>Salvar</Button>
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] text-muted-foreground">
+          {released ? "Liberado para participantes" : "Oculto (apenas admins)"}
+        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px]">Liberar</span>
+          <Switch checked={released} onCheckedChange={toggle} disabled={!current && !edited} />
+        </div>
+      </div>
+    </div>
+  );
+}
