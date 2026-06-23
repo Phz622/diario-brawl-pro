@@ -48,6 +48,7 @@ function RoomPage() {
       if (error) throw error;
       return data;
     },
+    refetchInterval: 5000,
   });
 
   const myJoin = nicks.data?.some((p) => p.is_me) ?? false;
