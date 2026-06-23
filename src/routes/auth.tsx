@@ -112,12 +112,13 @@ const signupSchema = z.object({
   full_name: z.string().trim().min(3, "Nome completo obrigatório").max(120),
   phone: z.string().trim().min(8, "Telefone inválido").max(20),
   nick: z.string().trim().min(2, "Nick obrigatório").max(40),
+  nick2: z.string().trim().max(40).optional().or(z.literal("")),
   email: z.string().trim().email("Email inválido").max(160),
   password: z.string().min(8, "A senha precisa ter pelo menos 8 caracteres. Tente uma senha maior.").max(100),
 });
 
 function SignupForm({ onDone }: { onDone: () => void }) {
-  const [form, setForm] = useState({ full_name: "", phone: "", nick: "", email: "", password: "" });
+  const [form, setForm] = useState({ full_name: "", phone: "", nick: "", nick2: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
 
   function set<K extends keyof typeof form>(k: K, v: string) { setForm((f) => ({ ...f, [k]: v })); }
