@@ -76,30 +76,40 @@ function RoomsAdmin() {
       <CardContent className="space-y-2">
         {rooms.data?.length === 0 && <p className="text-xs text-muted-foreground py-4">Nenhuma sala.</p>}
         {rooms.data?.map((r) => (
-          <div key={r.id} className="rounded-md border border-border bg-surface p-3">
+          <div key={r.id} className="rounded-md border border-border bg-surface p-3 space-y-3">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-semibold">{r.name}</span>
-                  {r.status === "fechada"
-                    ? <Badge variant="secondary"><Lock className="size-3 mr-1" />Fechada</Badge>
-                    : <Badge className="bg-primary text-primary-foreground"><Unlock className="size-3 mr-1" />Aberta</Badge>}
+                  {r.finished_at
+                    ? <Badge variant="secondary"><Flag className="size-3 mr-1" />Finalizada</Badge>
+                    : r.status === "fechada"
+                      ? <Badge variant="secondary"><Lock className="size-3 mr-1" />Fechada</Badge>
+                      : <Badge className="bg-primary text-primary-foreground"><Unlock className="size-3 mr-1" />Aberta</Badge>}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
                   <span className="text-neon font-semibold">{brl(r.entry_fee)}</span>
                   <span className="flex items-center gap-1"><Users className="size-3" />{counts.data?.[r.id] ?? 0}/{r.max_participants}</span>
                 </div>
               </div>
-              <div className="flex gap-1">
-                <Button size="icon" variant="outline" className="size-7" onClick={() => toggleStatus(r.id, r.status as any)}>
-                  {r.status === "aberta" ? <Lock className="size-3.5" /> : <Unlock className="size-3.5" />}
-                </Button>
+              <div className="flex gap-1 flex-wrap justify-end">
+                {!r.finished_at && (
+                  <Button size="icon" variant="outline" className="size-7" title={r.status === "aberta" ? "Fechar inscrições" : "Abrir inscrições"} onClick={() => toggleStatus(r.id, r.status as any)}>
+                    {r.status === "aberta" ? <Lock className="size-3.5" /> : <Unlock className="size-3.5" />}
+                  </Button>
+                )}
                 <RoomFormDialog room={r} onSaved={() => qc.invalidateQueries({ queryKey: ["admin-rooms"] })}
-                  trigger={<Button size="icon" variant="outline" className="size-7"><Pencil className="size-3.5" /></Button>} />
+                  trigger={<Button size="icon" variant="outline" className="size-7" title="Editar"><Pencil className="size-3.5" /></Button>} />
                 <ParticipantsDialog roomId={r.id} roomName={r.name} canRemove={main} />
-                {main && <Button size="icon" variant="outline" className="size-7" onClick={() => remove(r.id)}><Trash2 className="size-3.5" /></Button>}
+                {!r.finished_at && (
+                  <Button size="icon" variant="outline" className="size-7" title="Finalizar partida" onClick={() => finalize(r.id)}>
+                    <Flag className="size-3.5 text-neon" />
+                  </Button>
+                )}
+                {main && <Button size="icon" variant="outline" className="size-7" title="Excluir" onClick={() => remove(r.id)}><Trash2 className="size-3.5" /></Button>}
               </div>
             </div>
+            <RoomLinkPanel roomId={r.id} />
           </div>
         ))}
       </CardContent>
