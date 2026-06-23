@@ -66,11 +66,14 @@ export function MobileShell({
             </div>
           </div>
         )}
-        {title && (
-          <div className="mx-auto max-w-6xl px-4 md:px-8 pb-3">
-            <h1 className="text-xl md:text-2xl font-bold tracking-tight">{title}</h1>
-          </div>
-        )}
+        <div className="mx-auto max-w-6xl px-4 md:px-8 pt-2 pb-4 text-center">
+          <h1
+            className="text-3xl md:text-5xl font-bold tracking-wider text-neon drop-shadow-[0_0_18px_rgba(57,255,20,0.45)]"
+            style={{ fontFamily: '"Audiowide", system-ui, sans-serif' }}
+          >
+            {title ?? "Diário Brawl Pro"}
+          </h1>
+        </div>
       </header>
 
       <main className="flex-1 mx-auto max-w-6xl w-full px-4 md:px-8 py-4 md:py-8 pb-24 md:pb-8">{children}</main>
