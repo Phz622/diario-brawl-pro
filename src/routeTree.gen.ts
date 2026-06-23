@@ -9,61 +9,322 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
+import { Route as AuthenticatedCarteiraRouteImport } from './routes/_authenticated/carteira'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedSalaIdRouteImport } from './routes/_authenticated/sala.$id'
+import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin.usuarios'
+import { Route as AuthenticatedAdminSaquesRouteImport } from './routes/_authenticated/admin.saques'
+import { Route as AuthenticatedAdminSalasRouteImport } from './routes/_authenticated/admin.salas'
+import { Route as AuthenticatedAdminDepositosRouteImport } from './routes/_authenticated/admin.depositos'
+import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated/admin.configuracoes'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCarteiraRoute = AuthenticatedCarteiraRouteImport.update({
+  id: '/carteira',
+  path: '/carteira',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedSalaIdRoute = AuthenticatedSalaIdRouteImport.update({
+  id: '/sala/$id',
+  path: '/sala/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminUsuariosRoute =
+  AuthenticatedAdminUsuariosRouteImport.update({
+    id: '/usuarios',
+    path: '/usuarios',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminSaquesRoute =
+  AuthenticatedAdminSaquesRouteImport.update({
+    id: '/saques',
+    path: '/saques',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminSalasRoute = AuthenticatedAdminSalasRouteImport.update({
+  id: '/salas',
+  path: '/salas',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminDepositosRoute =
+  AuthenticatedAdminDepositosRouteImport.update({
+    id: '/depositos',
+    path: '/depositos',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminConfiguracoesRoute =
+  AuthenticatedAdminConfiguracoesRouteImport.update({
+    id: '/configuracoes',
+    path: '/configuracoes',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/carteira': typeof AuthenticatedCarteiraRoute
+  '/perfil': typeof AuthenticatedPerfilRoute
+  '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/admin/depositos': typeof AuthenticatedAdminDepositosRoute
+  '/admin/salas': typeof AuthenticatedAdminSalasRoute
+  '/admin/saques': typeof AuthenticatedAdminSaquesRoute
+  '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/sala/$id': typeof AuthenticatedSalaIdRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/carteira': typeof AuthenticatedCarteiraRoute
+  '/perfil': typeof AuthenticatedPerfilRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/admin/depositos': typeof AuthenticatedAdminDepositosRoute
+  '/admin/salas': typeof AuthenticatedAdminSalasRoute
+  '/admin/saques': typeof AuthenticatedAdminSaquesRoute
+  '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/sala/$id': typeof AuthenticatedSalaIdRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_authenticated/carteira': typeof AuthenticatedCarteiraRoute
+  '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/_authenticated/admin/depositos': typeof AuthenticatedAdminDepositosRoute
+  '/_authenticated/admin/salas': typeof AuthenticatedAdminSalasRoute
+  '/_authenticated/admin/saques': typeof AuthenticatedAdminSaquesRoute
+  '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/_authenticated/sala/$id': typeof AuthenticatedSalaIdRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/admin'
+    | '/carteira'
+    | '/perfil'
+    | '/admin/configuracoes'
+    | '/admin/depositos'
+    | '/admin/salas'
+    | '/admin/saques'
+    | '/admin/usuarios'
+    | '/sala/$id'
+    | '/admin/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/auth'
+    | '/carteira'
+    | '/perfil'
+    | '/'
+    | '/admin/configuracoes'
+    | '/admin/depositos'
+    | '/admin/salas'
+    | '/admin/saques'
+    | '/admin/usuarios'
+    | '/sala/$id'
+    | '/admin'
+  id:
+    | '__root__'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/admin'
+    | '/_authenticated/carteira'
+    | '/_authenticated/perfil'
+    | '/_authenticated/'
+    | '/_authenticated/admin/configuracoes'
+    | '/_authenticated/admin/depositos'
+    | '/_authenticated/admin/salas'
+    | '/_authenticated/admin/saques'
+    | '/_authenticated/admin/usuarios'
+    | '/_authenticated/sala/$id'
+    | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/perfil': {
+      id: '/_authenticated/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof AuthenticatedPerfilRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/carteira': {
+      id: '/_authenticated/carteira'
+      path: '/carteira'
+      fullPath: '/carteira'
+      preLoaderRoute: typeof AuthenticatedCarteiraRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/sala/$id': {
+      id: '/_authenticated/sala/$id'
+      path: '/sala/$id'
+      fullPath: '/sala/$id'
+      preLoaderRoute: typeof AuthenticatedSalaIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/usuarios': {
+      id: '/_authenticated/admin/usuarios'
+      path: '/usuarios'
+      fullPath: '/admin/usuarios'
+      preLoaderRoute: typeof AuthenticatedAdminUsuariosRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/saques': {
+      id: '/_authenticated/admin/saques'
+      path: '/saques'
+      fullPath: '/admin/saques'
+      preLoaderRoute: typeof AuthenticatedAdminSaquesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/salas': {
+      id: '/_authenticated/admin/salas'
+      path: '/salas'
+      fullPath: '/admin/salas'
+      preLoaderRoute: typeof AuthenticatedAdminSalasRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/depositos': {
+      id: '/_authenticated/admin/depositos'
+      path: '/depositos'
+      fullPath: '/admin/depositos'
+      preLoaderRoute: typeof AuthenticatedAdminDepositosRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/configuracoes': {
+      id: '/_authenticated/admin/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/admin/configuracoes'
+      preLoaderRoute: typeof AuthenticatedAdminConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
     }
   }
 }
 
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminConfiguracoesRoute: typeof AuthenticatedAdminConfiguracoesRoute
+  AuthenticatedAdminDepositosRoute: typeof AuthenticatedAdminDepositosRoute
+  AuthenticatedAdminSalasRoute: typeof AuthenticatedAdminSalasRoute
+  AuthenticatedAdminSaquesRoute: typeof AuthenticatedAdminSaquesRoute
+  AuthenticatedAdminUsuariosRoute: typeof AuthenticatedAdminUsuariosRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminConfiguracoesRoute: AuthenticatedAdminConfiguracoesRoute,
+  AuthenticatedAdminDepositosRoute: AuthenticatedAdminDepositosRoute,
+  AuthenticatedAdminSalasRoute: AuthenticatedAdminSalasRoute,
+  AuthenticatedAdminSaquesRoute: AuthenticatedAdminSaquesRoute,
+  AuthenticatedAdminUsuariosRoute: AuthenticatedAdminUsuariosRoute,
+  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
+  AuthenticatedCarteiraRoute: typeof AuthenticatedCarteiraRoute
+  AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedSalaIdRoute: typeof AuthenticatedSalaIdRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
+  AuthenticatedCarteiraRoute: AuthenticatedCarteiraRoute,
+  AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedSalaIdRoute: AuthenticatedSalaIdRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
