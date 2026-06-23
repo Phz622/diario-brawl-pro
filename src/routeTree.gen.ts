@@ -22,7 +22,6 @@ import { Route as AuthenticatedAdminSaquesRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminSalasRouteImport } from './routes/_authenticated/admin.salas'
 import { Route as AuthenticatedAdminDepositosRouteImport } from './routes/_authenticated/admin.depositos'
 import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated/admin.configuracoes'
-import { Route as ApiPublicSetupBootstrapAdminRouteImport } from './routes/api/public/setup/bootstrap-admin'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -92,12 +91,6 @@ const AuthenticatedAdminConfiguracoesRoute =
     path: '/configuracoes',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const ApiPublicSetupBootstrapAdminRoute =
-  ApiPublicSetupBootstrapAdminRouteImport.update({
-    id: '/api/public/setup/bootstrap-admin',
-    path: '/api/public/setup/bootstrap-admin',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -112,7 +105,6 @@ export interface FileRoutesByFullPath {
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/sala/$id': typeof AuthenticatedSalaIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
-  '/api/public/setup/bootstrap-admin': typeof ApiPublicSetupBootstrapAdminRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
@@ -126,7 +118,6 @@ export interface FileRoutesByTo {
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/sala/$id': typeof AuthenticatedSalaIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
-  '/api/public/setup/bootstrap-admin': typeof ApiPublicSetupBootstrapAdminRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -143,7 +134,6 @@ export interface FileRoutesById {
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/_authenticated/sala/$id': typeof AuthenticatedSalaIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
-  '/api/public/setup/bootstrap-admin': typeof ApiPublicSetupBootstrapAdminRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -160,7 +150,6 @@ export interface FileRouteTypes {
     | '/admin/usuarios'
     | '/sala/$id'
     | '/admin/'
-    | '/api/public/setup/bootstrap-admin'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
@@ -174,7 +163,6 @@ export interface FileRouteTypes {
     | '/admin/usuarios'
     | '/sala/$id'
     | '/admin'
-    | '/api/public/setup/bootstrap-admin'
   id:
     | '__root__'
     | '/_authenticated'
@@ -190,13 +178,11 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/usuarios'
     | '/_authenticated/sala/$id'
     | '/_authenticated/admin/'
-    | '/api/public/setup/bootstrap-admin'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
-  ApiPublicSetupBootstrapAdminRoute: typeof ApiPublicSetupBootstrapAdminRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -292,13 +278,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminConfiguracoesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/api/public/setup/bootstrap-admin': {
-      id: '/api/public/setup/bootstrap-admin'
-      path: '/api/public/setup/bootstrap-admin'
-      fullPath: '/api/public/setup/bootstrap-admin'
-      preLoaderRoute: typeof ApiPublicSetupBootstrapAdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -345,7 +324,6 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
-  ApiPublicSetupBootstrapAdminRoute: ApiPublicSetupBootstrapAdminRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
