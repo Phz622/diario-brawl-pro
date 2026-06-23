@@ -60,6 +60,13 @@ function RoomsAdmin() {
     toast.success("Sala excluída"); qc.invalidateQueries({ queryKey: ["admin-rooms"] });
   }
 
+  async function finalize(id: string) {
+    if (!confirm("Finalizar partida? Isso fecha a sala e adiciona +1 partida para cada inscrito.")) return;
+    const { error } = await supabase.rpc("finalize_room", { p_room_id: id });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Partida finalizada"); qc.invalidateQueries({ queryKey: ["admin-rooms"] });
+  }
+
   return (
     <Card className="bg-card">
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
