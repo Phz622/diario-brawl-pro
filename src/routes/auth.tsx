@@ -179,6 +179,10 @@ function SignupForm({ onDone }: { onDone: () => void }) {
         </div>
       </div>
       <div>
+        <Label htmlFor="nick2">Nick de Brawl Stars Secundário (opcional)</Label>
+        <Input id="nick2" value={form.nick2} onChange={(e) => set("nick2", e.target.value)} placeholder="Conta secundária, se tiver" />
+      </div>
+      <div>
         <Label htmlFor="email">Email</Label>
         <Input id="email" type="email" value={form.email} onChange={(e) => set("email", e.target.value)} required autoComplete="email" />
       </div>
