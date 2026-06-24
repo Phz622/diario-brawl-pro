@@ -78,6 +78,7 @@ export type Database = {
           nick: string
           nick2: string | null
           phone: string
+          wins: number
         }
         Insert: {
           created_at?: string
@@ -88,6 +89,7 @@ export type Database = {
           nick: string
           nick2?: string | null
           phone: string
+          wins?: number
         }
         Update: {
           created_at?: string
@@ -98,6 +100,7 @@ export type Database = {
           nick?: string
           nick2?: string | null
           phone?: string
+          wins?: number
         }
         Relationships: []
       }
@@ -314,6 +317,10 @@ export type Database = {
         Args: { p_refund: boolean; p_room_id: string; p_user_id: string }
         Returns: undefined
       }
+      admin_set_user_stats: {
+        Args: { p_matches_played: number; p_user_id: string; p_wins: number }
+        Returns: undefined
+      }
       admin_update_profile: {
         Args: {
           p_full_name: string
@@ -335,6 +342,7 @@ export type Database = {
         Returns: {
           matches_played: number
           nick: string
+          wins: number
         }[]
       }
       get_room_counts: {
@@ -401,7 +409,13 @@ export type Database = {
       app_role: "admin_principal" | "admin_salas" | "participante"
       request_status: "pendente" | "aprovado" | "recusado" | "cancelado"
       room_status: "aberta" | "fechada"
-      tx_type: "deposito" | "saque" | "inscricao" | "ajuste_admin" | "reembolso"
+      tx_type:
+        | "deposito"
+        | "saque"
+        | "inscricao"
+        | "ajuste_admin"
+        | "reembolso"
+        | "premio"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -532,7 +546,14 @@ export const Constants = {
       app_role: ["admin_principal", "admin_salas", "participante"],
       request_status: ["pendente", "aprovado", "recusado", "cancelado"],
       room_status: ["aberta", "fechada"],
-      tx_type: ["deposito", "saque", "inscricao", "ajuste_admin", "reembolso"],
+      tx_type: [
+        "deposito",
+        "saque",
+        "inscricao",
+        "ajuste_admin",
+        "reembolso",
+        "premio",
+      ],
     },
   },
 } as const
