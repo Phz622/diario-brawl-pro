@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useSession, useRoles, isMainAdmin } from "@/hooks/use-auth";
 import { brl } from "@/lib/format";
 import { toast } from "sonner";
-import { Switch } from "@/components/ui/switch";
+
 import { Plus, Lock, Unlock, Pencil, Trash2, Users, Link as LinkIcon, Flag } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/salas")({
