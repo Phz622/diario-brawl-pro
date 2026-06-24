@@ -83,9 +83,66 @@ function UserActions({ userId, roles, onChanged }: { userId: string; roles: AppR
   return (
     <div className="mt-1 flex gap-1 justify-end flex-wrap">
       <AdjustBalanceDialog userId={userId} onDone={onChanged} />
+      <EditStatsDialog userId={userId} onDone={onChanged} />
       <ManageRolesDialog userId={userId} roles={roles} onDone={onChanged} />
       <Button size="sm" variant="destructive" className="h-7 text-[10px]" onClick={removeUser}>Excluir</Button>
     </div>
+  );
+}
+
+function EditStatsDialog({ userId, onDone }: { userId: string; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [matches, setMatches] = useState("");
+  const [wins, setWins] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const prof = useQuery({
+    queryKey: ["admin-user-stats", userId],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("profiles").select("matches_played, wins").eq("id", userId).maybeSingle();
+      if (error) throw error;
+      setMatches(String((data as any)?.matches_played ?? 0));
+      setWins(String((data as any)?.wins ?? 0));
+      return data as any;
+    },
+  });
+
+  async function submit() {
+    const m = parseInt(matches);
+    const w = parseInt(wins);
+    if (!isFinite(m) || m < 0 || !isFinite(w) || w < 0) { toast.error("Valores inválidos"); return; }
+    if (w > m) { toast.error("Vitórias não podem ser maiores que partidas jogadas"); return; }
+    setLoading(true);
+    const { error } = await supabase.rpc("admin_set_user_stats", { p_user_id: userId, p_matches_played: m, p_wins: w });
+    setLoading(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Ranking atualizado");
+    setOpen(false); onDone();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild><Button size="sm" variant="outline" className="h-7 text-[10px]">Ranking</Button></DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Editar ranking do usuário</DialogTitle></DialogHeader>
+        {prof.isLoading ? <p className="text-xs">Carregando...</p> : (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Partidas jogadas</Label>
+                <Input inputMode="numeric" value={matches} onChange={(e) => setMatches(e.target.value)} />
+              </div>
+              <div>
+                <Label>Vitórias</Label>
+                <Input inputMode="numeric" value={wins} onChange={(e) => setWins(e.target.value)} />
+              </div>
+            </div>
+            <Button onClick={submit} disabled={loading} className="w-full">Salvar</Button>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 

@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useSession, useRoles, isMainAdmin } from "@/hooks/use-auth";
 import { brl } from "@/lib/format";
 import { toast } from "sonner";
-import { Switch } from "@/components/ui/switch";
+
 import { Plus, Lock, Unlock, Pencil, Trash2, Users, Link as LinkIcon, Flag } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/salas")({
@@ -265,9 +265,14 @@ function RoomLinkPanel({ roomId }: { roomId: string }) {
   }
 
   return (
-    <div className="rounded-md bg-card/60 border border-border/60 p-2 space-y-2">
-      <div className="flex items-center gap-2 text-xs font-semibold text-neon">
-        <LinkIcon className="size-3.5" /> Link da sala (Brawl Stars)
+    <div className="rounded-md bg-gradient-to-br from-card to-surface/40 border border-primary/20 p-3 space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-xs font-semibold text-neon">
+          <LinkIcon className="size-3.5" /> Link da sala (Brawl Stars)
+        </div>
+        <Badge variant={released ? "default" : "secondary"} className={released ? "bg-primary/20 text-primary border border-primary/40 text-[10px]" : "text-[10px]"}>
+          {released ? "Liberado" : "Oculto"}
+        </Badge>
       </div>
       <div className="flex gap-1">
         <Input
@@ -278,15 +283,15 @@ function RoomLinkPanel({ roomId }: { roomId: string }) {
         />
         <Button size="sm" className="h-8" onClick={save} disabled={!edited}>Salvar</Button>
       </div>
-      <div className="flex items-center justify-between">
-        <span className="text-[11px] text-muted-foreground">
-          {released ? "Liberado para participantes" : "Oculto (apenas admins)"}
-        </span>
-        <div className="flex items-center gap-2">
-          <span className="text-[11px]">Liberar</span>
-          <Switch checked={released} onCheckedChange={toggle} disabled={!current && !edited} />
-        </div>
-      </div>
+      <Button
+        size="sm"
+        className={`w-full h-8 ${released ? "bg-muted text-foreground hover:bg-muted/80" : "glow-strong"}`}
+        onClick={() => toggle(!released)}
+        disabled={!current && !edited}
+        variant={released ? "outline" : "default"}
+      >
+        {released ? "Ocultar link dos participantes" : "Liberar link para participantes"}
+      </Button>
     </div>
   );
 }
