@@ -97,7 +97,11 @@ function WalletPage() {
         </TabsContent>
 
         <TabsContent value="sacar" className="space-y-3">
-          <WithdrawForm balance={wallet.data ?? 0} onCreated={() => { withdrawals.refetch(); }} />
+          <WithdrawForm
+            balance={wallet.data ?? 0}
+            pendingTotal={(withdrawals.data ?? []).filter((w) => w.status === "pendente").reduce((s, w) => s + Number(w.amount), 0)}
+            onCreated={() => { withdrawals.refetch(); }}
+          />
           <RequestList
             title="Meus saques"
             items={withdrawals.data ?? []}
