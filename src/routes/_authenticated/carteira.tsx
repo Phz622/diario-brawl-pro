@@ -99,15 +99,15 @@ function WalletPage() {
         <TabsContent value="sacar" className="space-y-3">
           <WithdrawForm
             balance={wallet.data ?? 0}
-            pendingTotal={(withdrawals.data ?? []).filter((w) => w.status === "pendente").reduce((s, w) => s + Number(w.amount), 0)}
-            onCreated={() => { withdrawals.refetch(); }}
+            onCreated={() => { withdrawals.refetch(); qc.invalidateQueries({ queryKey: ["wallet"] }); }}
           />
           <RequestList
             title="Meus saques"
             items={withdrawals.data ?? []}
             onCancel={async (id) => {
-              const { error } = await supabase.from("withdrawal_requests").update({ status: "cancelado" }).eq("id", id);
-              if (error) toast.error(error.message); else { toast.success("Pedido cancelado"); qc.invalidateQueries({ queryKey: ["my-withdrawals"] }); }
+              const { error } = await supabase.rpc("cancel_withdrawal", { p_id: id });
+              if (error) toast.error(error.message);
+              else { toast.success("Pedido cancelado — valor estornado"); qc.invalidateQueries({ queryKey: ["my-withdrawals"] }); qc.invalidateQueries({ queryKey: ["wallet"] }); }
             }}
             labelAmount="Valor"
           />
