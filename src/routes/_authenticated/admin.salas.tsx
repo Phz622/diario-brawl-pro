@@ -97,7 +97,7 @@ function RoomsAdmin() {
                   trigger={<Button size="icon" variant="outline" className="size-7" title="Editar"><Pencil className="size-3.5" /></Button>} />
                 <ParticipantsDialog roomId={r.id} roomName={r.name} canRemove={main} />
                 {!r.finished_at && (
-                  <FinalizeDialog roomId={r.id} roomName={r.name} onDone={() => qc.invalidateQueries({ queryKey: ["admin-rooms"] })} />
+                  <FinalizeDialog room={r} onDone={() => qc.invalidateQueries({ queryKey: ["admin-rooms"] })} />
                 )}
                 {main && <Button size="icon" variant="outline" className="size-7" title="Excluir" onClick={() => remove(r.id)}><Trash2 className="size-3.5" /></Button>}
               </div>
