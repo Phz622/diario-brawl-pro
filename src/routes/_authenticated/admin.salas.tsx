@@ -55,10 +55,11 @@ function RoomsAdmin() {
   }
 
   async function remove(id: string) {
-    if (!confirm("Excluir esta sala?")) return;
-    const { error } = await supabase.from("rooms").delete().eq("id", id);
+    if (!confirm("Excluir esta sala? Os participantes serão reembolsados automaticamente.")) return;
+    const { error } = await supabase.rpc("admin_delete_room", { p_room_id: id });
     if (error) { toast.error(error.message); return; }
-    toast.success("Sala excluída"); qc.invalidateQueries({ queryKey: ["admin-rooms"] });
+    toast.success("Sala excluída e participantes reembolsados");
+    qc.invalidateQueries({ queryKey: ["admin-rooms"] });
   }
 
   return (
