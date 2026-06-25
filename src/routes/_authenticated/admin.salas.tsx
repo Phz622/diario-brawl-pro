@@ -111,18 +111,36 @@ function RoomsAdmin() {
   );
 }
 
+const PRESETS = [
+  { label: "Diário R$ 2,50", entry: 2.5, kill: 1.5, win: 5 },
+  { label: "Diário R$ 5,00", entry: 5, kill: 3, win: 10 },
+  { label: "Diário R$ 7,50", entry: 7.5, kill: 4.5, win: 15 },
+  { label: "Diário R$ 10,00", entry: 10, kill: 6, win: 20 },
+];
+
 function RoomFormDialog({ room, onSaved, trigger }: { room?: any; onSaved: () => void; trigger: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(room?.name ?? "");
   const [fee, setFee] = useState(room?.entry_fee?.toString() ?? "");
+  const [killV, setKillV] = useState(room?.kill_value?.toString() ?? "");
+  const [winV, setWinV] = useState(room?.win_value?.toString() ?? "");
   const [max, setMax] = useState(room?.max_participants?.toString() ?? "");
   const [desc, setDesc] = useState(room?.description ?? "");
 
+  function applyPreset(idx: number) {
+    const p = PRESETS[idx];
+    setFee(p.entry.toFixed(2).replace(".", ","));
+    setKillV(p.kill.toFixed(2).replace(".", ","));
+    setWinV(p.win.toFixed(2).replace(".", ","));
+  }
+
   async function save() {
     const feeN = parseFloat(fee.replace(",", "."));
+    const killN = parseFloat((killV || "0").replace(",", "."));
+    const winN = parseFloat((winV || "0").replace(",", "."));
     const maxN = parseInt(max);
     if (!name.trim() || !isFinite(feeN) || feeN < 0 || !isFinite(maxN) || maxN < 1) { toast.error("Dados inválidos"); return; }
-    const payload = { name: name.trim(), entry_fee: feeN, max_participants: maxN, description: desc.trim() || null };
+    const payload = { name: name.trim(), entry_fee: feeN, kill_value: killN, win_value: winN, max_participants: maxN, description: desc.trim() || null };
     const op = room
       ? supabase.from("rooms").update(payload).eq("id", room.id)
       : supabase.from("rooms").insert({ ...payload, status: "aberta" });
@@ -138,10 +156,22 @@ function RoomFormDialog({ room, onSaved, trigger }: { room?: any; onSaved: () =>
       <DialogContent>
         <DialogHeader><DialogTitle>{room ? "Editar sala" : "Nova sala"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
+          <div>
+            <Label className="text-xs text-muted-foreground">Presets rápidos</Label>
+            <div className="grid grid-cols-2 gap-1 mt-1">
+              {PRESETS.map((p, i) => (
+                <Button key={i} type="button" size="sm" variant="outline" className="h-8 text-[11px]" onClick={() => applyPreset(i)}>
+                  {p.label}
+                </Button>
+              ))}
+            </div>
+          </div>
           <div><Label>Nome</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Valor inscrição (R$)</Label><Input inputMode="decimal" value={fee} onChange={(e) => setFee(e.target.value)} /></div>
+            <div><Label>Inscrição (R$)</Label><Input inputMode="decimal" value={fee} onChange={(e) => setFee(e.target.value)} /></div>
             <div><Label>Máx. participantes</Label><Input inputMode="numeric" value={max} onChange={(e) => setMax(e.target.value)} /></div>
+            <div><Label>Valor por kill (R$)</Label><Input inputMode="decimal" value={killV} onChange={(e) => setKillV(e.target.value)} /></div>
+            <div><Label>Prêmio vitória (R$)</Label><Input inputMode="decimal" value={winV} onChange={(e) => setWinV(e.target.value)} /></div>
           </div>
           <div><Label>Descrição</Label><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={3} /></div>
           <Button onClick={save} className="w-full">Salvar</Button>
