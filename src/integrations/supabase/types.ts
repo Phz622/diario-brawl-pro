@@ -170,9 +170,11 @@ export type Database = {
           entry_fee: number
           finished_at: string | null
           id: string
+          kill_value: number
           max_participants: number
           name: string
           status: Database["public"]["Enums"]["room_status"]
+          win_value: number
           winner_id: string | null
         }
         Insert: {
@@ -182,9 +184,11 @@ export type Database = {
           entry_fee: number
           finished_at?: string | null
           id?: string
+          kill_value?: number
           max_participants: number
           name: string
           status?: Database["public"]["Enums"]["room_status"]
+          win_value?: number
           winner_id?: string | null
         }
         Update: {
@@ -194,9 +198,11 @@ export type Database = {
           entry_fee?: number
           finished_at?: string | null
           id?: string
+          kill_value?: number
           max_participants?: number
           name?: string
           status?: Database["public"]["Enums"]["room_status"]
+          win_value?: number
           winner_id?: string | null
         }
         Relationships: []
@@ -312,6 +318,7 @@ export type Database = {
         Args: { p_delta: number; p_reason: string; p_user_id: string }
         Returns: undefined
       }
+      admin_delete_room: { Args: { p_room_id: string }; Returns: undefined }
       admin_delete_user: { Args: { p_user_id: string }; Returns: undefined }
       admin_remove_participant: {
         Args: { p_refund: boolean; p_room_id: string; p_user_id: string }
@@ -332,7 +339,16 @@ export type Database = {
       }
       approve_deposit: { Args: { p_id: string }; Returns: undefined }
       approve_withdrawal: { Args: { p_id: string }; Returns: undefined }
+      cancel_withdrawal: { Args: { p_id: string }; Returns: undefined }
+      create_withdrawal_request: {
+        Args: { p_amount: number; p_pix_key: string }
+        Returns: string
+      }
       finalize_room: { Args: { p_room_id: string }; Returns: undefined }
+      finalize_room_with_kills: {
+        Args: { p_kills: Json; p_room_id: string; p_winner_id: string }
+        Returns: undefined
+      }
       finalize_room_with_winner: {
         Args: { p_room_id: string; p_winner_id: string }
         Returns: undefined
@@ -416,6 +432,8 @@ export type Database = {
         | "ajuste_admin"
         | "reembolso"
         | "premio"
+        | "saque_estorno"
+        | "kill_bonus"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -553,6 +571,8 @@ export const Constants = {
         "ajuste_admin",
         "reembolso",
         "premio",
+        "saque_estorno",
+        "kill_bonus",
       ],
     },
   },
