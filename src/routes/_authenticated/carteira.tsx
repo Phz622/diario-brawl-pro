@@ -99,15 +99,15 @@ function WalletPage() {
         <TabsContent value="sacar" className="space-y-3">
           <WithdrawForm
             balance={wallet.data ?? 0}
-            pendingTotal={(withdrawals.data ?? []).filter((w) => w.status === "pendente").reduce((s, w) => s + Number(w.amount), 0)}
-            onCreated={() => { withdrawals.refetch(); }}
+            onCreated={() => { withdrawals.refetch(); qc.invalidateQueries({ queryKey: ["wallet"] }); }}
           />
           <RequestList
             title="Meus saques"
             items={withdrawals.data ?? []}
             onCancel={async (id) => {
-              const { error } = await supabase.from("withdrawal_requests").update({ status: "cancelado" }).eq("id", id);
-              if (error) toast.error(error.message); else { toast.success("Pedido cancelado"); qc.invalidateQueries({ queryKey: ["my-withdrawals"] }); }
+              const { error } = await supabase.rpc("cancel_withdrawal", { p_id: id });
+              if (error) toast.error(error.message);
+              else { toast.success("Pedido cancelado — valor estornado"); qc.invalidateQueries({ queryKey: ["my-withdrawals"] }); qc.invalidateQueries({ queryKey: ["wallet"] }); }
             }}
             labelAmount="Valor"
           />
@@ -196,26 +196,25 @@ function DepositForm({ onCreated }: { onCreated: () => void }) {
   );
 }
 
-function WithdrawForm({ balance, pendingTotal, onCreated }: { balance: number; pendingTotal: number; onCreated: () => void }) {
-  const { user } = useSession();
+function WithdrawForm({ balance, onCreated }: { balance: number; onCreated: () => void }) {
   const [amount, setAmount] = useState("");
   const [pix, setPix] = useState("");
   const [loading, setLoading] = useState(false);
-  const available = Math.max(0, balance - pendingTotal);
+  const available = Math.max(0, balance);
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const value = parseFloat(amount.replace(",", "."));
     if (!isFinite(value) || value <= 0) { toast.error("Valor inválido"); return; }
     if (value > available) {
-      toast.error(`Você só pode sacar até ${brl(available)} (descontando saques pendentes).`);
+      toast.error(`Você só pode sacar até ${brl(available)}.`);
       return;
     }
     if (pix.trim().length < 3) { toast.error("Informe sua chave PIX"); return; }
     setLoading(true);
-    const { error } = await supabase.from("withdrawal_requests").insert({ user_id: user!.id, amount: value, pix_key: pix.trim(), status: "pendente" });
+    const { error } = await supabase.rpc("create_withdrawal_request", { p_amount: value, p_pix_key: pix.trim() });
     setLoading(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Pedido enviado");
+    toast.success("Pedido enviado — valor descontado do saldo");
     setAmount(""); setPix("");
     onCreated();
   }
@@ -228,6 +227,7 @@ function WithdrawForm({ balance, pendingTotal, onCreated }: { balance: number; p
             <span>Disponível para saque</span>
             <span className="text-neon font-semibold">{brl(available)}</span>
           </div>
+          <p className="text-[10px] text-warning">⚠ O valor é descontado do saldo imediatamente. Em caso de recusa ou cancelamento, é estornado automaticamente.</p>
           <div>
             <Label htmlFor="w-amount">Valor (R$)</Label>
             <Input

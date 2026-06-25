@@ -55,10 +55,11 @@ function RoomsAdmin() {
   }
 
   async function remove(id: string) {
-    if (!confirm("Excluir esta sala?")) return;
-    const { error } = await supabase.from("rooms").delete().eq("id", id);
+    if (!confirm("Excluir esta sala? Os participantes serão reembolsados automaticamente.")) return;
+    const { error } = await supabase.rpc("admin_delete_room", { p_room_id: id });
     if (error) { toast.error(error.message); return; }
-    toast.success("Sala excluída"); qc.invalidateQueries({ queryKey: ["admin-rooms"] });
+    toast.success("Sala excluída e participantes reembolsados");
+    qc.invalidateQueries({ queryKey: ["admin-rooms"] });
   }
 
   return (
@@ -96,7 +97,7 @@ function RoomsAdmin() {
                   trigger={<Button size="icon" variant="outline" className="size-7" title="Editar"><Pencil className="size-3.5" /></Button>} />
                 <ParticipantsDialog roomId={r.id} roomName={r.name} canRemove={main} />
                 {!r.finished_at && (
-                  <FinalizeDialog roomId={r.id} roomName={r.name} onDone={() => qc.invalidateQueries({ queryKey: ["admin-rooms"] })} />
+                  <FinalizeDialog room={r} onDone={() => qc.invalidateQueries({ queryKey: ["admin-rooms"] })} />
                 )}
                 {main && <Button size="icon" variant="outline" className="size-7" title="Excluir" onClick={() => remove(r.id)}><Trash2 className="size-3.5" /></Button>}
               </div>
@@ -110,18 +111,36 @@ function RoomsAdmin() {
   );
 }
 
+const PRESETS = [
+  { label: "Diário R$ 2,50", entry: 2.5, kill: 1.5, win: 5 },
+  { label: "Diário R$ 5,00", entry: 5, kill: 3, win: 10 },
+  { label: "Diário R$ 7,50", entry: 7.5, kill: 4.5, win: 15 },
+  { label: "Diário R$ 10,00", entry: 10, kill: 6, win: 20 },
+];
+
 function RoomFormDialog({ room, onSaved, trigger }: { room?: any; onSaved: () => void; trigger: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(room?.name ?? "");
   const [fee, setFee] = useState(room?.entry_fee?.toString() ?? "");
+  const [killV, setKillV] = useState(room?.kill_value?.toString() ?? "");
+  const [winV, setWinV] = useState(room?.win_value?.toString() ?? "");
   const [max, setMax] = useState(room?.max_participants?.toString() ?? "");
   const [desc, setDesc] = useState(room?.description ?? "");
 
+  function applyPreset(idx: number) {
+    const p = PRESETS[idx];
+    setFee(p.entry.toFixed(2).replace(".", ","));
+    setKillV(p.kill.toFixed(2).replace(".", ","));
+    setWinV(p.win.toFixed(2).replace(".", ","));
+  }
+
   async function save() {
     const feeN = parseFloat(fee.replace(",", "."));
+    const killN = parseFloat((killV || "0").replace(",", "."));
+    const winN = parseFloat((winV || "0").replace(",", "."));
     const maxN = parseInt(max);
     if (!name.trim() || !isFinite(feeN) || feeN < 0 || !isFinite(maxN) || maxN < 1) { toast.error("Dados inválidos"); return; }
-    const payload = { name: name.trim(), entry_fee: feeN, max_participants: maxN, description: desc.trim() || null };
+    const payload = { name: name.trim(), entry_fee: feeN, kill_value: killN, win_value: winN, max_participants: maxN, description: desc.trim() || null };
     const op = room
       ? supabase.from("rooms").update(payload).eq("id", room.id)
       : supabase.from("rooms").insert({ ...payload, status: "aberta" });
@@ -137,10 +156,22 @@ function RoomFormDialog({ room, onSaved, trigger }: { room?: any; onSaved: () =>
       <DialogContent>
         <DialogHeader><DialogTitle>{room ? "Editar sala" : "Nova sala"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
+          <div>
+            <Label className="text-xs text-muted-foreground">Presets rápidos</Label>
+            <div className="grid grid-cols-2 gap-1 mt-1">
+              {PRESETS.map((p, i) => (
+                <Button key={i} type="button" size="sm" variant="outline" className="h-8 text-[11px]" onClick={() => applyPreset(i)}>
+                  {p.label}
+                </Button>
+              ))}
+            </div>
+          </div>
           <div><Label>Nome</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Valor inscrição (R$)</Label><Input inputMode="decimal" value={fee} onChange={(e) => setFee(e.target.value)} /></div>
+            <div><Label>Inscrição (R$)</Label><Input inputMode="decimal" value={fee} onChange={(e) => setFee(e.target.value)} /></div>
             <div><Label>Máx. participantes</Label><Input inputMode="numeric" value={max} onChange={(e) => setMax(e.target.value)} /></div>
+            <div><Label>Valor por kill (R$)</Label><Input inputMode="decimal" value={killV} onChange={(e) => setKillV(e.target.value)} /></div>
+            <div><Label>Prêmio vitória (R$)</Label><Input inputMode="decimal" value={winV} onChange={(e) => setWinV(e.target.value)} /></div>
           </div>
           <div><Label>Descrição</Label><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={3} /></div>
           <Button onClick={save} className="w-full">Salvar</Button>
@@ -296,59 +327,116 @@ function RoomLinkPanel({ roomId }: { roomId: string }) {
   );
 }
 
-function FinalizeDialog({ roomId, roomName, onDone }: { roomId: string; roomName: string; onDone: () => void }) {
+function FinalizeDialog({ room, onDone }: { room: any; onDone: () => void }) {
   const [open, setOpen] = useState(false);
+  const [step, setStep] = useState<"winner" | "kills">("winner");
   const [winner, setWinner] = useState<string>("");
+  const [kills, setKills] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState(false);
   const parts = useQuery({
-    queryKey: ["finalize-parts", roomId],
+    queryKey: ["finalize-parts", room.id],
     enabled: open,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_room_nicks", { p_room_id: roomId });
+      const { data, error } = await supabase.rpc("get_room_nicks", { p_room_id: room.id });
       if (error) throw error;
       return (data ?? []) as { user_id: string; nick: string }[];
     },
   });
 
+  function setKill(uid: string, delta: number) {
+    setKills((k) => {
+      const cur = k[uid] ?? 0;
+      const next = Math.max(0, Math.min(9, cur + delta));
+      return { ...k, [uid]: next };
+    });
+  }
+
   async function submit() {
     if (!winner) { toast.error("Selecione o vencedor"); return; }
     setBusy(true);
-    const { error } = await supabase.rpc("finalize_room_with_winner", { p_room_id: roomId, p_winner_id: winner });
+    const payload: Record<string, number> = {};
+    for (const p of parts.data ?? []) payload[p.user_id] = kills[p.user_id] ?? 0;
+    const { error } = await supabase.rpc("finalize_room_with_kills", {
+      p_room_id: room.id, p_winner_id: winner, p_kills: payload,
+    });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Partida finalizada! Prêmio de R$ 10,00 enviado ao vencedor.");
-    setOpen(false); setWinner(""); onDone();
+    toast.success("Partida finalizada! Prêmios distribuídos.");
+    setOpen(false); setStep("winner"); setWinner(""); setKills({}); onDone();
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setStep("winner"); setWinner(""); setKills({}); } }}>
       <DialogTrigger asChild>
         <Button size="icon" variant="outline" className="size-7" title="Finalizar partida">
           <Flag className="size-3.5 text-neon" />
         </Button>
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader><DialogTitle>Finalizar — {roomName}</DialogTitle></DialogHeader>
-        <div className="space-y-3">
-          <p className="text-xs text-muted-foreground">Selecione o vencedor. Ele receberá +R$ 10,00 automaticamente e a partida será computada para todos os inscritos.</p>
-          {parts.isLoading && <p className="text-xs">Carregando inscritos...</p>}
-          {parts.data?.length === 0 && <p className="text-xs text-muted-foreground">Nenhum inscrito.</p>}
-          <div className="grid gap-1 max-h-72 overflow-y-auto">
-            {parts.data?.map((p) => (
-              <button
-                key={p.user_id}
-                type="button"
-                onClick={() => setWinner(p.user_id)}
-                className={`text-left text-sm px-3 py-2 rounded-md border ${winner === p.user_id ? "border-primary bg-primary/15 text-primary font-semibold" : "border-border bg-surface"}`}
-              >
-                @{p.nick}
-              </button>
-            ))}
+        <DialogHeader>
+          <DialogTitle>Finalizar — {room.name}</DialogTitle>
+        </DialogHeader>
+
+        {step === "winner" && (
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              1/2 — Selecione o vencedor. Prêmio: <span className="text-neon font-semibold">{brl(room.win_value ?? 0)}</span> + kills (<span className="text-neon">{brl(room.kill_value ?? 0)}</span> cada).
+            </p>
+            {parts.isLoading && <p className="text-xs">Carregando inscritos...</p>}
+            {parts.data?.length === 0 && <p className="text-xs text-muted-foreground">Nenhum inscrito.</p>}
+            <div className="grid gap-1 max-h-72 overflow-y-auto">
+              {parts.data?.map((p) => (
+                <button
+                  key={p.user_id}
+                  type="button"
+                  onClick={() => setWinner(p.user_id)}
+                  className={`text-left text-sm px-3 py-2 rounded-md border ${winner === p.user_id ? "border-primary bg-primary/15 text-primary font-semibold" : "border-border bg-surface"}`}
+                >
+                  @{p.nick}
+                </button>
+              ))}
+            </div>
+            <Button onClick={() => setStep("kills")} disabled={!winner} className="w-full">
+              Próximo — definir kills
+            </Button>
           </div>
-          <Button onClick={submit} disabled={busy || !winner} className="w-full glow-strong">
-            {busy ? "Finalizando..." : "Confirmar vencedor e finalizar"}
-          </Button>
-        </div>
+        )}
+
+        {step === "kills" && (
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              2/2 — Quantas kills cada um fez? (máx 9). Cada kill = <span className="text-neon">{brl(room.kill_value ?? 0)}</span>.
+            </p>
+            <div className="grid gap-2 max-h-80 overflow-y-auto">
+              {parts.data?.map((p) => {
+                const k = kills[p.user_id] ?? 0;
+                const isWin = p.user_id === winner;
+                const payout = k * Number(room.kill_value ?? 0) + (isWin ? Number(room.win_value ?? 0) : 0);
+                return (
+                  <div key={p.user_id} className={`flex items-center justify-between gap-2 px-3 py-2 rounded-md border ${isWin ? "border-primary/60 bg-primary/10" : "border-border bg-surface"}`}>
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium truncate">
+                        @{p.nick} {isWin && <Badge className="ml-1 bg-primary text-primary-foreground text-[9px]">VENCEDOR</Badge>}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">Receberá: <span className="text-neon">{brl(payout)}</span></div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button type="button" size="icon" variant="outline" className="size-7" onClick={() => setKill(p.user_id, -1)} disabled={k <= 0}>−</Button>
+                      <span className="w-6 text-center font-mono text-sm">{k}</span>
+                      <Button type="button" size="icon" variant="outline" className="size-7" onClick={() => setKill(p.user_id, 1)} disabled={k >= 9}>+</Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setStep("winner")}>Voltar</Button>
+              <Button onClick={submit} disabled={busy} className="flex-[2] glow-strong bg-primary text-primary-foreground">
+                {busy ? "Finalizando..." : "Entregar valores e finalizar partida!"}
+              </Button>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
