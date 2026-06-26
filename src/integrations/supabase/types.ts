@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_logs: {
+        Row: {
+          action: string
+          admin_id: string | null
+          created_at: string
+          details: Json
+          id: string
+          target_id: string | null
+          target_type: string
+        }
+        Insert: {
+          action: string
+          admin_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          target_id?: string | null
+          target_type: string
+        }
+        Update: {
+          action?: string
+          admin_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          target_id?: string | null
+          target_type?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           id: number
@@ -31,6 +61,77 @@ export type Database = {
           id?: number
           pix_holder_name?: string
           pix_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          body: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          image_name: string | null
+          image_path: string | null
+          image_size: number | null
+          sender_id: string
+          thread_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          image_name?: string | null
+          image_path?: string | null
+          image_size?: number | null
+          sender_id: string
+          thread_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          image_name?: string | null
+          image_path?: string | null
+          image_size?: number | null
+          sender_id?: string
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "chat_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_threads: {
+        Row: {
+          admin_id: string | null
+          created_at: string
+          id: string
+          participant_id: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          admin_id?: string | null
+          created_at?: string
+          id?: string
+          participant_id?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string | null
+          created_at?: string
+          id?: string
+          participant_id?: string | null
+          type?: string
           updated_at?: string
         }
         Relationships: []
@@ -339,7 +440,12 @@ export type Database = {
       }
       approve_deposit: { Args: { p_id: string }; Returns: undefined }
       approve_withdrawal: { Args: { p_id: string }; Returns: undefined }
+      can_access_chat_thread: {
+        Args: { p_thread_id: string; p_user_id: string }
+        Returns: boolean
+      }
       cancel_withdrawal: { Args: { p_id: string }; Returns: undefined }
+      cleanup_expired_chat_messages: { Args: never; Returns: undefined }
       create_withdrawal_request: {
         Args: { p_amount: number; p_pix_key: string }
         Returns: string
@@ -353,12 +459,24 @@ export type Database = {
         Args: { p_room_id: string; p_winner_id: string }
         Returns: undefined
       }
+      get_or_create_private_chat: {
+        Args: { p_admin_id: string }
+        Returns: string
+      }
+      get_or_create_public_chat: { Args: never; Returns: string }
       get_ranking: {
         Args: { p_limit?: number }
         Returns: {
           matches_played: number
           nick: string
           wins: number
+        }[]
+      }
+      get_released_room_link: {
+        Args: { p_room_id: string }
+        Returns: {
+          link: string
+          released: boolean
         }[]
       }
       get_room_counts: {
@@ -399,6 +517,15 @@ export type Database = {
       }
       is_any_admin: { Args: { _user_id: string }; Returns: boolean }
       join_room: { Args: { p_room_id: string }; Returns: undefined }
+      log_admin_action: {
+        Args: {
+          p_action: string
+          p_details?: Json
+          p_target_id?: string
+          p_target_type: string
+        }
+        Returns: undefined
+      }
       reject_deposit: { Args: { p_id: string }; Returns: undefined }
       reject_withdrawal: { Args: { p_id: string }; Returns: undefined }
       release_room_link: {
@@ -411,6 +538,20 @@ export type Database = {
           p_user_id: string
         }
         Returns: undefined
+      }
+      save_and_release_room_link: {
+        Args: { p_link: string; p_room_id: string }
+        Returns: undefined
+      }
+      send_chat_message: {
+        Args: {
+          p_body?: string
+          p_image_name?: string
+          p_image_path?: string
+          p_image_size?: number
+          p_thread_id: string
+        }
+        Returns: string
       }
       set_room_link: {
         Args: { p_link: string; p_room_id: string }
