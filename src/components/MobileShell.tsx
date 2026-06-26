@@ -1,5 +1,5 @@
 import { Link, useRouter } from "@tanstack/react-router";
-import { Home, Wallet, User, Shield, LogOut, Trophy } from "lucide-react";
+import { Home, Wallet, User, Shield, LogOut, Trophy, MessageCircle } from "lucide-react";
 import type { ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -36,6 +36,7 @@ export function MobileShell({
           <nav className="hidden md:flex items-center gap-1 ml-6">
             <DesktopNavItem to="/" icon={<Home className="size-4" />} label="Salas" />
             <DesktopNavItem to="/ranking" icon={<Trophy className="size-4" />} label="Ranking" />
+            <DesktopNavItem to="/chat" icon={<MessageCircle className="size-4" />} label="Chat" />
             <DesktopNavItem to="/carteira" icon={<Wallet className="size-4" />} label="Carteira" />
             <DesktopNavItem to="/perfil" icon={<User className="size-4" />} label="Perfil" />
           </nav>
@@ -79,9 +80,10 @@ export function MobileShell({
       <main className="flex-1 mx-auto max-w-6xl w-full px-4 md:px-8 py-4 md:py-8 pb-24 md:pb-8">{children}</main>
 
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 border-t border-border bg-background/95 backdrop-blur-md">
-        <div className="mx-auto max-w-xl grid grid-cols-4">
+        <div className="mx-auto max-w-xl grid grid-cols-5">
           <NavItem to="/" icon={<Home className="size-5" />} label="Salas" />
           <NavItem to="/ranking" icon={<Trophy className="size-5" />} label="Ranking" />
+          <NavItem to="/chat" icon={<MessageCircle className="size-5" />} label="Chat" />
           <NavItem to="/carteira" icon={<Wallet className="size-5" />} label="Carteira" />
           <NavItem to="/perfil" icon={<User className="size-5" />} label="Perfil" />
         </div>

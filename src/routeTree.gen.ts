@@ -21,6 +21,7 @@ import { Route as AuthenticatedSalaIdRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin.usuarios'
 import { Route as AuthenticatedAdminSaquesRouteImport } from './routes/_authenticated/admin.saques'
 import { Route as AuthenticatedAdminSalasRouteImport } from './routes/_authenticated/admin.salas'
+import { Route as AuthenticatedAdminLogsRouteImport } from './routes/_authenticated/admin.logs'
 import { Route as AuthenticatedAdminDepositosRouteImport } from './routes/_authenticated/admin.depositos'
 import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated/admin.configuracoes'
 
@@ -85,6 +86,11 @@ const AuthenticatedAdminSalasRoute = AuthenticatedAdminSalasRouteImport.update({
   path: '/salas',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminLogsRoute = AuthenticatedAdminLogsRouteImport.update({
+  id: '/logs',
+  path: '/logs',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedAdminDepositosRoute =
   AuthenticatedAdminDepositosRouteImport.update({
     id: '/depositos',
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/ranking': typeof AuthenticatedRankingRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/depositos': typeof AuthenticatedAdminDepositosRoute
+  '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/admin/salas': typeof AuthenticatedAdminSalasRoute
   '/admin/saques': typeof AuthenticatedAdminSaquesRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
@@ -121,6 +128,7 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/depositos': typeof AuthenticatedAdminDepositosRoute
+  '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/admin/salas': typeof AuthenticatedAdminSalasRoute
   '/admin/saques': typeof AuthenticatedAdminSaquesRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/_authenticated/admin/depositos': typeof AuthenticatedAdminDepositosRoute
+  '/_authenticated/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/_authenticated/admin/salas': typeof AuthenticatedAdminSalasRoute
   '/_authenticated/admin/saques': typeof AuthenticatedAdminSaquesRoute
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
@@ -155,6 +164,7 @@ export interface FileRouteTypes {
     | '/ranking'
     | '/admin/configuracoes'
     | '/admin/depositos'
+    | '/admin/logs'
     | '/admin/salas'
     | '/admin/saques'
     | '/admin/usuarios'
@@ -169,6 +179,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin/configuracoes'
     | '/admin/depositos'
+    | '/admin/logs'
     | '/admin/salas'
     | '/admin/saques'
     | '/admin/usuarios'
@@ -185,6 +196,7 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/_authenticated/admin/configuracoes'
     | '/_authenticated/admin/depositos'
+    | '/_authenticated/admin/logs'
     | '/_authenticated/admin/salas'
     | '/_authenticated/admin/saques'
     | '/_authenticated/admin/usuarios'
@@ -283,6 +295,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSalasRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/logs': {
+      id: '/_authenticated/admin/logs'
+      path: '/logs'
+      fullPath: '/admin/logs'
+      preLoaderRoute: typeof AuthenticatedAdminLogsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/depositos': {
       id: '/_authenticated/admin/depositos'
       path: '/depositos'
@@ -303,6 +322,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminConfiguracoesRoute: typeof AuthenticatedAdminConfiguracoesRoute
   AuthenticatedAdminDepositosRoute: typeof AuthenticatedAdminDepositosRoute
+  AuthenticatedAdminLogsRoute: typeof AuthenticatedAdminLogsRoute
   AuthenticatedAdminSalasRoute: typeof AuthenticatedAdminSalasRoute
   AuthenticatedAdminSaquesRoute: typeof AuthenticatedAdminSaquesRoute
   AuthenticatedAdminUsuariosRoute: typeof AuthenticatedAdminUsuariosRoute
@@ -312,6 +332,7 @@ interface AuthenticatedAdminRouteChildren {
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminConfiguracoesRoute: AuthenticatedAdminConfiguracoesRoute,
   AuthenticatedAdminDepositosRoute: AuthenticatedAdminDepositosRoute,
+  AuthenticatedAdminLogsRoute: AuthenticatedAdminLogsRoute,
   AuthenticatedAdminSalasRoute: AuthenticatedAdminSalasRoute,
   AuthenticatedAdminSaquesRoute: AuthenticatedAdminSaquesRoute,
   AuthenticatedAdminUsuariosRoute: AuthenticatedAdminUsuariosRoute,

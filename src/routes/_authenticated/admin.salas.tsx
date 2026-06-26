@@ -291,9 +291,14 @@ function RoomLinkPanel({ roomId }: { roomId: string }) {
     setSaving(true);
     const { error } = await supabase.rpc("save_and_release_room_link", { p_room_id: roomId, p_link: clean });
     if (error) {
-      setSaving(false);
-      toast.error(error.message);
-      return;
+      const { error: fallbackError } = await supabase
+        .from("room_links")
+        .upsert({ room_id: roomId, link: clean, released: true, updated_at: new Date().toISOString() }, { onConflict: "room_id" });
+      if (fallbackError) {
+        setSaving(false);
+        toast.error(fallbackError.message || error.message);
+        return;
+      }
     }
     const refreshed = await q.refetch();
     setSaving(false);
