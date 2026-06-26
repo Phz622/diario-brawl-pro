@@ -3,7 +3,7 @@ import { useSession, useRoles, isAdmin, isMainAdmin } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, LogOut, LayoutDashboard, Users, ArrowDownToLine, ArrowUpFromLine, Trophy, Settings } from "lucide-react";
+import { ArrowLeft, LogOut, LayoutDashboard, Users, ArrowDownToLine, ArrowUpFromLine, Trophy, Settings, ScrollText } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
@@ -54,6 +54,7 @@ function AdminLayout() {
             {main && <Tab to="/admin/usuarios" icon={<Users className="size-3.5" />}>Usuários</Tab>}
             {main && <Tab to="/admin/depositos" icon={<ArrowDownToLine className="size-3.5" />}>Depósitos</Tab>}
             {main && <Tab to="/admin/saques" icon={<ArrowUpFromLine className="size-3.5" />}>Saques</Tab>}
+            {main && <Tab to="/admin/logs" icon={<ScrollText className="size-3.5" />}>Logs</Tab>}
             {main && <Tab to="/admin/configuracoes" icon={<Settings className="size-3.5" />}>Configurações</Tab>}
           </div>
         </nav>

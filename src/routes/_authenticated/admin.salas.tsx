@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -266,6 +266,8 @@ function InlineParticipants({ roomId }: { roomId: string }) {
 
 function RoomLinkPanel({ roomId }: { roomId: string }) {
   const qc = useQueryClient();
+  const [link, setLink] = useState<string>("");
+  const [saving, setSaving] = useState(false);
   const q = useQuery({
     queryKey: ["admin-room-link", roomId],
     queryFn: async () => {
@@ -275,24 +277,38 @@ function RoomLinkPanel({ roomId }: { roomId: string }) {
       return row ?? { link: "", released: false };
     },
   });
-  const [link, setLink] = useState<string>("");
-  const [edited, setEdited] = useState(false);
 
-  const current = q.data?.link ?? "";
   const released = q.data?.released ?? false;
-  const value = edited ? link : current;
+  const current = q.data?.link ?? "";
 
-  async function save() {
-    const { error } = await supabase.rpc("set_room_link", { p_room_id: roomId, p_link: value });
-    if (error) { toast.error(error.message); return; }
-    toast.success("Link salvo"); setEdited(false);
+  useEffect(() => {
+    setLink(current);
+  }, [current]);
+
+  async function saveAndRelease() {
+    const clean = link.trim();
+    if (!clean) { toast.error("Cole o link da sala antes de liberar"); return; }
+    setSaving(true);
+    const { error } = await supabase.rpc("save_and_release_room_link", { p_room_id: roomId, p_link: clean });
+    if (error) {
+      const { error: fallbackError } = await supabase
+        .from("room_links")
+        .upsert({ room_id: roomId, link: clean, released: true, updated_at: new Date().toISOString() }, { onConflict: "room_id" });
+      if (fallbackError) {
+        setSaving(false);
+        toast.error(fallbackError.message || error.message);
+        return;
+      }
+    }
+    const refreshed = await q.refetch();
+    setSaving(false);
+    qc.invalidateQueries({ queryKey: ["room-link", roomId] });
     qc.invalidateQueries({ queryKey: ["admin-room-link", roomId] });
-  }
-  async function toggle(v: boolean) {
-    const { error } = await supabase.rpc("release_room_link", { p_room_id: roomId, p_released: v });
-    if (error) { toast.error(error.message); return; }
-    toast.success(v ? "Link liberado para participantes" : "Link ocultado");
-    qc.invalidateQueries({ queryKey: ["admin-room-link", roomId] });
+    if (refreshed.data?.released && refreshed.data?.link) {
+      toast.success("Link salvo e liberado para os participantes");
+    } else {
+      toast.warning("Link salvo. Atualize a página se o status não mudar imediatamente.");
+    }
   }
 
   return (
@@ -307,22 +323,23 @@ function RoomLinkPanel({ roomId }: { roomId: string }) {
       </div>
       <div className="flex gap-1">
         <Input
-          value={value}
-          onChange={(e) => { setLink(e.target.value); setEdited(true); }}
+          value={link}
+          onChange={(e) => setLink(e.target.value)}
           placeholder="Cole aqui o link da sala"
           className="h-8 text-xs"
         />
-        <Button size="sm" className="h-8" onClick={save} disabled={!edited}>Salvar</Button>
       </div>
       <Button
         size="sm"
-        className={`w-full h-8 ${released ? "bg-muted text-foreground hover:bg-muted/80" : "glow-strong"}`}
-        onClick={() => toggle(!released)}
-        disabled={!current && !edited}
-        variant={released ? "outline" : "default"}
+        className="w-full h-8 glow-strong"
+        onClick={saveAndRelease}
+        disabled={saving || !link.trim()}
       >
-        {released ? "Ocultar link dos participantes" : "Liberar link para participantes"}
+        {saving ? "Liberando..." : released ? "Salvar novamente e manter liberado" : "Salvar e liberar link"}
       </Button>
+      <p className="text-[10px] text-muted-foreground">
+        Este botão salva e libera em uma única ação para evitar o bug do link ficar oculto.
+      </p>
     </div>
   );
 }
