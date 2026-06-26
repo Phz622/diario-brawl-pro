@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { brl, dateBR } from "@/lib/format";
 import { toast } from "sonner";
 import type { AppRole } from "@/hooks/use-auth";
+import { getAdminUserEmails, setUserPasswordManually } from "@/lib/admin-user-functions";
 
 export const Route = createFileRoute("/_authenticated/admin/usuarios")({
   component: UsersAdmin,
@@ -24,24 +25,26 @@ function UsersAdmin() {
   const users = useQuery({
     queryKey: ["admin-users"],
     queryFn: async () => {
-      const [{ data: profiles }, { data: wallets }, { data: roles }] = await Promise.all([
+      const [{ data: profiles }, { data: wallets }, { data: roles }, emailRows] = await Promise.all([
         supabase.from("profiles").select("*").order("created_at", { ascending: false }),
         supabase.from("wallets").select("user_id, balance"),
         supabase.from("user_roles").select("user_id, role"),
+        getAdminUserEmails().catch(() => []),
       ]);
       const walletMap = Object.fromEntries((wallets ?? []).map((w) => [w.user_id, Number(w.balance)]));
+      const emailMap = Object.fromEntries((emailRows ?? []).map((u) => [u.id, u.email]));
       const rolesMap: Record<string, AppRole[]> = {};
       for (const r of roles ?? []) {
         (rolesMap[r.user_id] = rolesMap[r.user_id] ?? []).push(r.role as AppRole);
       }
-      return (profiles ?? []).map((p) => ({ ...p, balance: walletMap[p.id] ?? 0, roles: rolesMap[p.id] ?? [] }));
+      return (profiles ?? []).map((p) => ({ ...p, email: emailMap[p.id] ?? "", balance: walletMap[p.id] ?? 0, roles: rolesMap[p.id] ?? [] }));
     },
   });
 
   const filtered = (users.data ?? []).filter((u) => {
     const s = q.trim().toLowerCase();
     if (!s) return true;
-    return [u.full_name, u.phone, u.nick].some((v) => v?.toLowerCase().includes(s));
+    return [u.full_name, u.phone, u.nick, u.email].some((v) => v?.toLowerCase().includes(s));
   });
 
   return (
@@ -55,7 +58,7 @@ function UsersAdmin() {
             <div key={u.id} className="py-3 flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <div className="font-medium truncate">{u.full_name} <span className="text-xs text-muted-foreground">@{u.nick}</span></div>
-                <div className="text-[11px] text-muted-foreground truncate">{u.phone} · cadastro {dateBR(u.created_at)}</div>
+                <div className="text-[11px] text-muted-foreground truncate">{u.email || "sem email"} · {u.phone} · cadastro {dateBR(u.created_at)}</div>
                 <div className="mt-1 flex flex-wrap gap-1">
                   {u.roles.map((r) => <Badge key={r} variant="secondary" className="text-[9px] capitalize">{r.replace("_", " ")}</Badge>)}
                 </div>
@@ -84,9 +87,38 @@ function UserActions({ userId, roles, onChanged }: { userId: string; roles: AppR
     <div className="mt-1 flex gap-1 justify-end flex-wrap">
       <AdjustBalanceDialog userId={userId} onDone={onChanged} />
       <EditStatsDialog userId={userId} onDone={onChanged} />
+      <PasswordDialog userId={userId} />
       <ManageRolesDialog userId={userId} roles={roles} onDone={onChanged} />
       <Button size="sm" variant="destructive" className="h-7 text-[10px]" onClick={removeUser}>Excluir</Button>
     </div>
+  );
+}
+
+function PasswordDialog({ userId }: { userId: string }) {
+  const [open, setOpen] = useState(false);
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  async function submit() {
+    if (password.length < 8) { toast.error("A senha precisa ter pelo menos 8 caracteres"); return; }
+    setLoading(true);
+    try {
+      await setUserPasswordManually({ data: { userId, password } });
+      toast.success("Senha atualizada"); setPassword(""); setOpen(false);
+    } catch (e: any) { toast.error(e.message ?? "Erro ao atualizar senha"); }
+    finally { setLoading(false); }
+  }
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild><Button size="sm" variant="outline" className="h-7 text-[10px]">Definir senha</Button></DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Definir nova senha manualmente</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div><Label>Nova senha</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="mínimo 8 caracteres" /></div>
+          <p className="text-xs text-muted-foreground">Por segurança, a senha antiga não pode ser visualizada; apenas substituída.</p>
+          <Button onClick={submit} disabled={loading} className="w-full">{loading ? "Salvando..." : "Salvar nova senha"}</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
