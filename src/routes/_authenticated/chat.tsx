@@ -128,7 +128,7 @@ function ChatWindow({ threadId, userId }: { threadId: string; userId: string }) 
       const { error } = await supabase.storage.from("chat-images").upload(imagePath, file, { contentType: file.type });
       if (error) { setSending(false); toast.error(error.message); return; }
     }
-    const { error } = await supabase.rpc("send_chat_message", { p_thread_id: threadId, p_body: text, p_image_path: imagePath, p_image_name: file?.name ?? null, p_image_size: file?.size ?? null });
+    const { error } = await supabase.rpc("send_chat_message", { p_thread_id: threadId, p_body: text, p_image_path: imagePath ?? undefined, p_image_name: file?.name, p_image_size: file?.size });
     setSending(false);
     if (error) { toast.error(error.message); return; }
     setText(""); setFile(null); qc.invalidateQueries({ queryKey: ["chat-messages", threadId] });
