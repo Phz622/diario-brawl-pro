@@ -44,9 +44,9 @@ function RoomPage() {
   const linkQ = useQuery({
     queryKey: ["room-link", id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("room_links").select("link, released").eq("room_id", id).maybeSingle();
+      const { data, error } = await supabase.rpc("get_released_room_link", { p_room_id: id });
       if (error) throw error;
-      return data;
+      return (data ?? [])[0] as { link: string | null; released: boolean } | undefined;
     },
     refetchInterval: 5000,
   });
