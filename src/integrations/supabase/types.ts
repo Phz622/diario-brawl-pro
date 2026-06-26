@@ -459,6 +459,15 @@ export type Database = {
         Args: { p_room_id: string; p_winner_id: string }
         Returns: undefined
       }
+      get_chat_admins: {
+        Args: never
+        Returns: {
+          full_name: string
+          is_owner: boolean
+          nick: string
+          user_id: string
+        }[]
+      }
       get_or_create_private_chat: {
         Args: { p_admin_id: string }
         Returns: string
