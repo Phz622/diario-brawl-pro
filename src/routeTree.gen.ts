@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedRankingRouteImport } from './routes/_authenticated/ranking'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
+import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
 import { Route as AuthenticatedCarteiraRouteImport } from './routes/_authenticated/carteira'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
@@ -47,6 +48,11 @@ const AuthenticatedRankingRoute = AuthenticatedRankingRouteImport.update({
 const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
   id: '/perfil',
   path: '/perfil',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCarteiraRoute = AuthenticatedCarteiraRouteImport.update({
@@ -109,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/carteira': typeof AuthenticatedCarteiraRoute
+  '/chat': typeof AuthenticatedChatRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/ranking': typeof AuthenticatedRankingRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
@@ -123,6 +130,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/carteira': typeof AuthenticatedCarteiraRoute
+  '/chat': typeof AuthenticatedChatRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/ranking': typeof AuthenticatedRankingRoute
   '/': typeof AuthenticatedIndexRoute
@@ -141,6 +149,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/carteira': typeof AuthenticatedCarteiraRoute
+  '/_authenticated/chat': typeof AuthenticatedChatRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/_authenticated/ranking': typeof AuthenticatedRankingRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
@@ -160,6 +169,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin'
     | '/carteira'
+    | '/chat'
     | '/perfil'
     | '/ranking'
     | '/admin/configuracoes'
@@ -174,6 +184,7 @@ export interface FileRouteTypes {
   to:
     | '/auth'
     | '/carteira'
+    | '/chat'
     | '/perfil'
     | '/ranking'
     | '/'
@@ -191,6 +202,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/admin'
     | '/_authenticated/carteira'
+    | '/_authenticated/chat'
     | '/_authenticated/perfil'
     | '/_authenticated/ranking'
     | '/_authenticated/'
@@ -244,6 +256,13 @@ declare module '@tanstack/react-router' {
       path: '/perfil'
       fullPath: '/perfil'
       preLoaderRoute: typeof AuthenticatedPerfilRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/chat': {
+      id: '/_authenticated/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof AuthenticatedChatRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/carteira': {
@@ -345,6 +364,7 @@ const AuthenticatedAdminRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedCarteiraRoute: typeof AuthenticatedCarteiraRoute
+  AuthenticatedChatRoute: typeof AuthenticatedChatRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
   AuthenticatedRankingRoute: typeof AuthenticatedRankingRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
@@ -354,6 +374,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedCarteiraRoute: AuthenticatedCarteiraRoute,
+  AuthenticatedChatRoute: AuthenticatedChatRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
   AuthenticatedRankingRoute: AuthenticatedRankingRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
