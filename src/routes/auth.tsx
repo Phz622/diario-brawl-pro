@@ -96,7 +96,7 @@ function LoginForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-3">
       <div>
-        <Label htmlFor="identifier">Email ou Usuário</Label>
+        <Label htmlFor="identifier">Email</Label>
         <Input id="identifier" value={identifier} onChange={(e) => setIdentifier(e.target.value)} placeholder="seuemail@exemplo.com" required autoComplete="username" />
       </div>
       <div>
